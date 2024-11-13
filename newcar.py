@@ -2,10 +2,11 @@
 # Code Changed, Optimized And Commented By: NeuralNine (Florian Dedov)
 
 import math
-import random
+#import random
 import sys
-import os
+#import os
 import argparse
+import configparser
 
 import neat
 import pygame
@@ -13,7 +14,11 @@ import pygame
 # ---
 # Constants
 # ---
+# ---
+CONFIG_FILE     = "./config.ini"
+# ---
 MAX_GENERATIONS = 1000
+MAX_INPUTS      = 12
 # ---
 WIDTH           = 1920
 HEIGHT          = 1080
@@ -33,11 +38,25 @@ def parse_arguments():
     parser = argparse.ArgumentParser()
     
     parser.add_argument("-g", "--generations", type=int, help="Number of generations", default=MAX_GENERATIONS)
+    parser.add_argument("-i", "--inputs", type=int, help="Number of inputs", default=0)
     
     args = parser.parse_args()
 
+    # Read out the NEAT config file so we can update it if needed
+    config = configparser.ConfigParser()
+    config.read(CONFIG_FILE)
+
     if args.generations > MAX_GENERATIONS:
         args.generations = MAX_GENERATIONS
+    
+    if args.inputs:
+        if args.inputs > MAX_INPUTS:
+            args.inputs = MAX_INPUTS
+        
+        with open(CONFIG_FILE, "w") as config_file:    # save
+            config.write(config_file)
+    else:
+        args.inputs = int(config["DefaultGenome"]["num_inputs"])
     
     return args
 
@@ -60,6 +79,7 @@ class Car:
 
         self.radars = [] # List For Sensors / Radars
         self.drawing_radars = [] # Radars To Be Drawn
+        self.border_distances = [0] * args.inputs # The 'distances' read by the 'sensors'
 
         self.alive = True # Boolean To Check If Car is Crashed
 
@@ -140,18 +160,20 @@ class Car:
         self.check_collision(game_map)
         self.radars.clear()
 
-        # From -90 To 120 With Step-Size 45 Check Radar
-        for d in range(-90, 120, 45):
+        # From -90 To 90 With Step-Size 15 Check Radar
+        # Which gives us about 12 sensors
+        # This has to be taken into an account inside the config.txt file for the NEAT algorithm
+        # and update the num_inputs accordingly - each time we changes this or any other related code
+        for d in range(-90, 90, 15):
             self.check_radar(d, game_map)
 
     def get_data(self):
         # Get Distances To Border
         radars = self.radars
-        return_values = [0, 0, 0, 0, 0]
         for i, radar in enumerate(radars):
-            return_values[i] = int(radar[1] / 30)
+            self.border_distances[i] = int(radar[1] / 30)
 
-        return return_values
+        return self.border_distances
 
     def is_alive(self):
         # Basic Alive Function
@@ -273,7 +295,7 @@ if __name__ == "__main__":
     args = parse_arguments()
 
     # Load Config
-    config_path = "./config.txt"
+    config_path = CONFIG_FILE
     config = neat.config.Config(neat.DefaultGenome,
                                 neat.DefaultReproduction,
                                 neat.DefaultSpeciesSet,
