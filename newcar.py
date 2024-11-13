@@ -17,9 +17,6 @@ import pygame
 # ---
 CONFIG_FILE     = "./config.ini"
 # ---
-MAX_GENERATIONS = 1000
-MAX_INPUTS      = 12
-# ---
 WIDTH           = 1920
 HEIGHT          = 1080
 # ---
@@ -27,6 +24,13 @@ CAR_SIZE_X      = 60
 CAR_SIZE_Y      = 60
 # ---
 BORDER_COLOR    = (255, 255, 255, 255) # Color To Crash on Hit
+# ---
+MAX_GENERATIONS = 1000
+MAX_INPUTS      = 12
+# ---
+VIEW_ANGLE      = 180
+L_VIEW_ANGLE    = -int(VIEW_ANGLE / 2)
+R_VIEW_ANGLE    =  int(VIEW_ANGLE / 2)
 # ---
 
 current_generation = 0 # Generation counter
@@ -49,14 +53,19 @@ def parse_arguments():
     if args.generations > MAX_GENERATIONS:
         args.generations = MAX_GENERATIONS
     
+    # The number of inputs was specified from the command line
     if args.inputs:
-        if args.inputs > MAX_INPUTS:
-            args.inputs = MAX_INPUTS
-        
-        with open(CONFIG_FILE, "w") as config_file:    # save
-            config.write(config_file)
+        # It's different from the current value in the config file
+        if args.inputs !=  int(config["DefaultGenome"]["num_inputs"]):
+            if args.inputs > MAX_INPUTS:
+                args.inputs = MAX_INPUTS
+            
+            # We therefore need to update it
+            config["DefaultGenome"]["num_inputs"] = str(args.inputs)
+            with open(CONFIG_FILE, "w") as config_file:
+                config.write(config_file)
     else:
-        args.inputs = int(config["DefaultGenome"]["num_inputs"])
+        args.inputs !=  int(config["DefaultGenome"]["num_inputs"]) # Otherwise, keep the config value
     
     return args
 
@@ -164,7 +173,7 @@ class Car:
         # Which gives us about 12 sensors
         # This has to be taken into an account inside the config.txt file for the NEAT algorithm
         # and update the num_inputs accordingly - each time we changes this or any other related code
-        for d in range(-90, 90, 15):
+        for d in range(L_VIEW_ANGLE, R_VIEW_ANGLE, int(VIEW_ANGLE / args.inputs)):
             self.check_radar(d, game_map)
 
     def get_data(self):
@@ -202,7 +211,6 @@ def run_simulation(genomes, config):
 
     # Initialize PyGame And The Display
     pygame.init()
-    #screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.FULLSCREEN)
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
 
     # For All Genomes Passed Create A New Neural Network
