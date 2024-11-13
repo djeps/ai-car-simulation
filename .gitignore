@@ -1,5 +1,3 @@
 # VS Code folder (settings, debug configuration, etc.)
 .vscode/
 
-# The original NEAT config file
-config.txt
