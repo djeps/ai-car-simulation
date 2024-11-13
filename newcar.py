@@ -5,23 +5,41 @@ import math
 import random
 import sys
 import os
+import argparse
 
 import neat
 import pygame
 
+# ---
 # Constants
-# WIDTH = 1600
-# HEIGHT = 880
-
-WIDTH = 1920
-HEIGHT = 1080
-
-CAR_SIZE_X = 60    
-CAR_SIZE_Y = 60
-
-BORDER_COLOR = (255, 255, 255, 255) # Color To Crash on Hit
+# ---
+MAX_GENERATIONS = 1000
+# ---
+WIDTH           = 1920
+HEIGHT          = 1080
+# ---
+CAR_SIZE_X      = 60
+CAR_SIZE_Y      = 60
+# ---
+BORDER_COLOR    = (255, 255, 255, 255) # Color To Crash on Hit
+# ---
 
 current_generation = 0 # Generation counter
+
+def parse_arguments():
+    # Returns parsed arguments
+    args = None
+
+    parser = argparse.ArgumentParser()
+    
+    parser.add_argument("-g", "--generations", type=int, help="Number of generations", default=MAX_GENERATIONS)
+    
+    args = parser.parse_args()
+
+    if args.generations > MAX_GENERATIONS:
+        args.generations = MAX_GENERATIONS
+    
+    return args
 
 class Car:
 
@@ -162,7 +180,8 @@ def run_simulation(genomes, config):
 
     # Initialize PyGame And The Display
     pygame.init()
-    screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.FULLSCREEN)
+    #screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.FULLSCREEN)
+    screen = pygame.display.set_mode((WIDTH, HEIGHT))
 
     # For All Genomes Passed Create A New Neural Network
     for i, g in genomes:
@@ -189,7 +208,16 @@ def run_simulation(genomes, config):
         # Exit On Quit Event
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                print("... Quitting simulation ...")
                 sys.exit(0)
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_q:
+                    print("... Quitting simulation ...")
+                    sys.exit(0)
+                elif event.key == pygame.K_m:
+                    print("... Display menu ...")
+                else:
+                    print("... Unrecognized keystroke detected ...")
 
         # For Each Car Get The Acton It Takes
         for i, car in enumerate(cars):
@@ -242,7 +270,8 @@ def run_simulation(genomes, config):
         clock.tick(60) # 60 FPS
 
 if __name__ == "__main__":
-    
+    args = parse_arguments()
+
     # Load Config
     config_path = "./config.txt"
     config = neat.config.Config(neat.DefaultGenome,
@@ -257,5 +286,6 @@ if __name__ == "__main__":
     stats = neat.StatisticsReporter()
     population.add_reporter(stats)
     
-    # Run Simulation For A Maximum of 1000 Generations
-    population.run(run_simulation, 1000)
+    # Run Simulation
+    print(f"=> Running simulation with max: {args.generations} generations")
+    population.run(run_simulation, args.generations)
