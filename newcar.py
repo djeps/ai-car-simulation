@@ -30,7 +30,7 @@ MAX_INPUTS      = 12
 # ---
 VIEW_ANGLE      = 180
 L_VIEW_ANGLE    = -int(VIEW_ANGLE / 2)
-R_VIEW_ANGLE    =  int(VIEW_ANGLE / 2)
+R_VIEW_ANGLE    = int(VIEW_ANGLE / 2)
 # ---
 
 current_generation = 0 # Generation counter
@@ -182,13 +182,30 @@ class Car:
         self.check_collision(game_map)
         self.radars.clear()
 
-        # From -90 To 90 With Step-Size 15 Check Radar
-        # Which gives us about 12 sensors
-        # This has to be taken into an account inside the config.txt file for the NEAT algorithm
-        # and update the num_inputs accordingly - each time we changes this or any other related code
-        for d in range(L_VIEW_ANGLE, R_VIEW_ANGLE, int(VIEW_ANGLE / args.inputs)):
+        sensor_angles = self.get_radar_sensor_angles(args.inputs)
+        for d in sensor_angles:
             self.check_radar(d, game_map)
 
+    def get_radar_sensor_angles(self, num_inputs):
+        angles = []
+        angle_step = int(R_VIEW_ANGLE / int(args.inputs / 2))
+
+        if num_inputs % 2 == 0:
+            angle = int(angle_step / 2)
+            angles.append(-angle)
+        else:
+            angle = 0
+
+        angles.append(angle)
+
+        for i in range(0, int(args.inputs / 2)):
+            angle = angle + angle_step
+            if angle <= R_VIEW_ANGLE:
+                angles.append(angle)
+                angles.append(-angle)
+
+        angles.sort()
+        return angles
 
     def get_data(self):
         # Get Distances To Border
@@ -238,7 +255,7 @@ def run_simulation(genomes, config):
     clock = pygame.time.Clock()
     generation_font = pygame.font.SysFont("Arial", 30)
     alive_font = pygame.font.SysFont("Arial", 20)
-    game_map = pygame.image.load('map01.png').convert() # Convert Speeds Up A Lot
+    game_map = pygame.image.load('map02.png').convert() # Convert Speeds Up A Lot
 
     global current_generation
     current_generation += 1
