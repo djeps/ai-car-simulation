@@ -2,9 +2,9 @@
 # Code Changed, Optimized And Commented By: NeuralNine (Florian Dedov)
 
 import math
-#import random
+import random
 import sys
-#import os
+import os
 import argparse
 import configparser
 
@@ -34,6 +34,8 @@ R_VIEW_ANGLE    =  int(VIEW_ANGLE / 2)
 # ---
 
 current_generation = 0 # Generation counter
+args = None
+
 
 def parse_arguments():
     # Returns parsed arguments
@@ -43,6 +45,8 @@ def parse_arguments():
     
     parser.add_argument("-g", "--generations", type=int, help="Number of generations", default=MAX_GENERATIONS)
     parser.add_argument("-i", "--inputs", type=int, help="Number of inputs", default=0)
+    parser.add_argument("-r", "--display_radars", help="Display radars", action='store_true')
+    parser.add_argument("-V", "--verbose", help="Verbose mode", action='store_true')
     
     args = parser.parse_args()
 
@@ -65,13 +69,14 @@ def parse_arguments():
             with open(CONFIG_FILE, "w") as config_file:
                 config.write(config_file)
     else:
-        args.inputs !=  int(config["DefaultGenome"]["num_inputs"]) # Otherwise, keep the config value
-    
+        args.inputs =  int(config["DefaultGenome"]["num_inputs"]) # Otherwise, keep the config value
+
     return args
+
 
 class Car:
 
-    def __init__(self):
+    def __init__(self, display_radars):
         # Load Car Sprite and Rotate
         self.sprite = pygame.image.load('car.png').convert() # Convert Speeds Up A Lot
         self.sprite = pygame.transform.scale(self.sprite, (CAR_SIZE_X, CAR_SIZE_Y))
@@ -95,16 +100,22 @@ class Car:
         self.distance = 0 # Distance Driven
         self.time = 0 # Time Passed
 
+        self.display_radars = args.display_radars
+
+
     def draw(self, screen):
         screen.blit(self.rotated_sprite, self.position) # Draw Sprite
         self.draw_radar(screen) #OPTIONAL FOR SENSORS
 
+
     def draw_radar(self, screen):
         # Optionally Draw All Sensors / Radars
-        for radar in self.radars:
-            position = radar[0]
-            pygame.draw.line(screen, (0, 255, 0), self.center, position, 1)
-            pygame.draw.circle(screen, (0, 255, 0), position, 5)
+        if self.display_radars:
+            for radar in self.radars:
+                position = radar[0]
+                pygame.draw.line(screen, (0, 255, 0), self.center, position, 1)
+                pygame.draw.circle(screen, (0, 255, 0), position, 5)
+
 
     def check_collision(self, game_map):
         self.alive = True
@@ -114,6 +125,7 @@ class Car:
             if game_map.get_at((int(point[0]), int(point[1]))) == BORDER_COLOR:
                 self.alive = False
                 break
+
 
     def check_radar(self, degree, game_map):
         length = 0
@@ -130,11 +142,12 @@ class Car:
         dist = int(math.sqrt(math.pow(x - self.center[0], 2) + math.pow(y - self.center[1], 2)))
         self.radars.append([(x, y), dist])
     
+
     def update(self, game_map):
         # Set The Speed To 20 For The First Time
         # Only When Having 4 Output Nodes With Speed Up and Down
         if not self.speed_set:
-            self.speed = 20
+            self.speed = 10
             self.speed_set = True
 
         # Get Rotated Sprite And Move Into The Right X-Direction
@@ -176,6 +189,7 @@ class Car:
         for d in range(L_VIEW_ANGLE, R_VIEW_ANGLE, int(VIEW_ANGLE / args.inputs)):
             self.check_radar(d, game_map)
 
+
     def get_data(self):
         # Get Distances To Border
         radars = self.radars
@@ -184,14 +198,17 @@ class Car:
 
         return self.border_distances
 
+
     def is_alive(self):
         # Basic Alive Function
         return self.alive
+
 
     def get_reward(self):
         # Calculate Reward (Maybe Change?)
         # return self.distance / 50.0
         return self.distance / (CAR_SIZE_X / 2)
+
 
     def rotate_center(self, image, angle):
         # Rotate The Rectangle
@@ -204,14 +221,9 @@ class Car:
 
 
 def run_simulation(genomes, config):
-    
     # Empty Collections For Nets and Cars
     nets = []
     cars = []
-
-    # Initialize PyGame And The Display
-    pygame.init()
-    screen = pygame.display.set_mode((WIDTH, HEIGHT))
 
     # For All Genomes Passed Create A New Neural Network
     for i, g in genomes:
@@ -219,14 +231,14 @@ def run_simulation(genomes, config):
         nets.append(net)
         g.fitness = 0
 
-        cars.append(Car())
+        cars.append(Car(args.display_radars))
 
     # Clock Settings
     # Font Settings & Loading Map
     clock = pygame.time.Clock()
     generation_font = pygame.font.SysFont("Arial", 30)
     alive_font = pygame.font.SysFont("Arial", 20)
-    game_map = pygame.image.load('map.png').convert() # Convert Speeds Up A Lot
+    game_map = pygame.image.load('map01.png').convert() # Convert Speeds Up A Lot
 
     global current_generation
     current_generation += 1
@@ -235,33 +247,51 @@ def run_simulation(genomes, config):
     counter = 0
 
     while True:
-        # Exit On Quit Event
         for event in pygame.event.get():
+            # Exit On Quit Event
             if event.type == pygame.QUIT:
-                print("... Quitting simulation ...")
+                if args.verbose:
+                    print("=> Quitting simulation")
                 sys.exit(0)
             elif event.type == pygame.KEYDOWN:
+                # Exit when the Q button is pressed
                 if event.key == pygame.K_q:
-                    print("... Quitting simulation ...")
+                    if args.verbose:
+                        print("=> Quitting simulation")
                     sys.exit(0)
+                # Display the menu when the M button is pressed
                 elif event.key == pygame.K_m:
-                    print("... Display menu ...")
+                    if args.verbose:
+                        print("=> Display menu")
+                elif event.key == pygame.K_r:
+                    args.display_radars = args.display_radars ^ True
+                    
+                    if args.verbose:
+                        print(f"=> Activate radar display: {args.display_radars}")
                 else:
-                    print("... Unrecognized keystroke detected ...")
+                    if args.verbose:
+                        print("=> Unrecognized keystroke detected")
 
         # For Each Car Get The Acton It Takes
         for i, car in enumerate(cars):
             output = nets[i].activate(car.get_data())
-            choice = output.index(max(output))
-            if choice == 0:
+            action = output.index(max(output))
+            
+            # Turn Left
+            if action == 0:
                 car.angle += 10 # Left
-            elif choice == 1:
+            # Turn Right
+            elif action == 1:
                 car.angle -= 10 # Right
-            elif choice == 2:
+            # Slow Down
+            elif action == 2:
                 if(car.speed - 2 >= 12):
                     car.speed -= 2 # Slow Down
+            # Speed Up
             else:
                 car.speed += 2 # Speed Up
+            
+            car.display_radars = args.display_radars
         
         # Check If Car Is Still Alive
         # Increase Fitness If Yes And Break Loop If Not
@@ -316,6 +346,12 @@ if __name__ == "__main__":
     stats = neat.StatisticsReporter()
     population.add_reporter(stats)
     
+    # Initialize PyGame And The Display
+    os.environ['SDL_VIDEO_CENTERED'] = '1'
+    pygame.init()
+    screen = pygame.display.set_mode((WIDTH, HEIGHT))
+
     # Run Simulation
-    print(f"=> Running simulation with max: {args.generations} generations")
+    if args.verbose:
+        print(f"=> Running simulation with max: {args.generations} generations")
     population.run(run_simulation, args.generations)
