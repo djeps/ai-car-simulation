@@ -17,8 +17,10 @@ import pygame
 # ---
 CONFIG_FILE              = "./config.ini"
 # ---
-WIDTH                    = 1920
-HEIGHT                   = 1080
+WIDTH                    = 1920 # 1920|1600
+HEIGHT                   = 1080 # 1080|900
+# ---
+CAR_SIZES                = (10, 20, 30, 40, 50, 60, 70, 80, 90)
 # ---
 CAR_SIZE_X               = 60
 CAR_SIZE_Y               = 60
@@ -49,7 +51,8 @@ def parse_arguments():
     parser.add_argument("-i", "--inputs", type=int, help="Number of inputs", default=0)
     parser.add_argument("-r", "--display_radars", help="Display radars", action='store_true')
     parser.add_argument("-V", "--verbose", help="Verbose mode", action='store_true')
-    parser.add_argument("-l", "--sensing_length", type=int, help="Maximum radar sensing length", default=DEF_RADAR_SENSING_LENGTH)
+    parser.add_argument("-l", "--sensing_length", type=int, help="Radar sensing length", default=DEF_RADAR_SENSING_LENGTH)
+    parser.add_argument("-s", "--car_size", type=int, help="Car size", default=5)
     
     args = parser.parse_args()
 
@@ -83,6 +86,19 @@ def parse_arguments():
         if args.verbose:
             print(f"=> Overriding radar sensing length: {args.sensing_length} (given) to {DEF_RADAR_SENSING_LENGTH} (default)")
         args.sensing_length = DEF_RADAR_SENSING_LENGTH
+    
+    if args.car_size > len(CAR_SIZES) - 1:
+        if args.verbose:
+            print(f"=> Overriding car size: {args.car_size} (given) to {len(CAR_SIZES) - 1} (max).")
+        args.car_size = len(CAR_SIZES) - 1
+    
+    if args.car_size <= 0:
+        if args.verbose:
+            print(f"=> Overriding car size: {args.car_size} (given) to {0} (min).")
+        args.car_size = 0
+    
+    if args.verbose:
+        print(f"=> Car size (px) = {CAR_SIZES[args.car_size]}x{CAR_SIZES[args.car_size]}")
 
     return args
 
@@ -92,7 +108,7 @@ class Car:
     def __init__(self, display_radars):
         # Load Car Sprite and Rotate
         self.sprite = pygame.image.load('car.png').convert() # Convert Speeds Up A Lot
-        self.sprite = pygame.transform.scale(self.sprite, (CAR_SIZE_X, CAR_SIZE_Y))
+        self.sprite = pygame.transform.scale(self.sprite, (CAR_SIZES[args.car_size], CAR_SIZES[args.car_size]))
         self.rotated_sprite = self.sprite 
 
         # self.position = [690, 740] # Starting Position
@@ -102,7 +118,7 @@ class Car:
 
         self.speed_set = False # Flag For Default Speed Later on
 
-        self.center = [self.position[0] + CAR_SIZE_X / 2, self.position[1] + CAR_SIZE_Y / 2] # Calculate Center
+        self.center = [self.position[0] + int(CAR_SIZES[args.car_size] / 2), self.position[1] + int(CAR_SIZES[args.car_size] / 2)] # Calculate Center
 
         self.radars = [] # List For Sensors / Radars
         self.drawing_radars = [] # Radars To Be Drawn
@@ -180,11 +196,11 @@ class Car:
         self.position[1] = min(self.position[1], WIDTH - 120)
 
         # Calculate New Center
-        self.center = [int(self.position[0]) + CAR_SIZE_X / 2, int(self.position[1]) + CAR_SIZE_Y / 2]
+        self.center = [int(self.position[0]) + int(CAR_SIZES[args.car_size] / 2), int(self.position[1]) + int(CAR_SIZES[args.car_size] / 2)]
 
         # Calculate Four Corners
         # Length Is Half The Side
-        length = 0.5 * CAR_SIZE_X
+        length = int(0.5 * CAR_SIZES[args.car_size])
         left_top = [self.center[0] + math.cos(math.radians(360 - (self.angle + 30))) * length, self.center[1] + math.sin(math.radians(360 - (self.angle + 30))) * length]
         right_top = [self.center[0] + math.cos(math.radians(360 - (self.angle + 150))) * length, self.center[1] + math.sin(math.radians(360 - (self.angle + 150))) * length]
         left_bottom = [self.center[0] + math.cos(math.radians(360 - (self.angle + 210))) * length, self.center[1] + math.sin(math.radians(360 - (self.angle + 210))) * length]
@@ -237,7 +253,7 @@ class Car:
     def get_reward(self):
         # Calculate Reward (Maybe Change?)
         # return self.distance / 50.0
-        return self.distance / (CAR_SIZE_X / 2)
+        return self.distance / (int(CAR_SIZES[args.car_size] / 2))
 
 
     def rotate_center(self, image, angle):
@@ -269,6 +285,7 @@ def run_simulation(genomes, config):
     generation_font = pygame.font.SysFont("Arial", 30)
     alive_font = pygame.font.SysFont("Arial", 20)
     game_map = pygame.image.load('map02.png').convert() # Convert Speeds Up A Lot
+
 
     global current_generation
     current_generation += 1
