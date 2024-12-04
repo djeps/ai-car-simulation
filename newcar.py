@@ -15,26 +15,26 @@ import pygame
 # Constants
 # ---
 # ---
-CONFIG_FILE              = "./config.ini"
+CONFIG_FILE = "./config.ini"
 # ---
-WIDTH                    = 1920 # 1920|1600
-HEIGHT                   = 1080 # 1080|900
+WIDTH = 1920 # 1920|1600
+HEIGHT = 1080 # 1080|900
 # ---
-CAR_SIZES                = (10, 20, 30, 40, 50, 60, 70, 80, 90)
+CAR_SIZES = (10, 20, 30, 40, 50, 60, 70, 80, 90)
 # ---
-CAR_SIZE_X               = 60
-CAR_SIZE_Y               = 60
+CAR_SIZE_X = 60
+CAR_SIZE_Y = 60
 # ---
-BORDER_COLOR             = (255, 255, 255, 255) # Color To Crash on Hit
+BORDER_COLOR = (255, 255, 255, 255) # Color To Crash on Hit
 MAX_RADAR_SENSING_LENGTH = 500
 DEF_RADAR_SENSING_LENGTH = 300
 # ---
-MAX_GENERATIONS          = 1000
-MAX_INPUTS               = 12
+MAX_GENERATIONS = 1000
+MAX_INPUTS = 12
 # ---
-VIEW_ANGLE               = 180
-L_VIEW_ANGLE             = -int(VIEW_ANGLE / 2)
-R_VIEW_ANGLE             = int(VIEW_ANGLE / 2)
+VIEW_ANGLE = 180
+L_VIEW_ANGLE = -int(VIEW_ANGLE / 2)
+R_VIEW_ANGLE = int(VIEW_ANGLE / 2)
 # ---
 
 current_generation = 0 # Generation counter
@@ -111,7 +111,6 @@ class Car:
         self.sprite = pygame.transform.scale(self.sprite, (CAR_SIZES[args.car_size], CAR_SIZES[args.car_size]))
         self.rotated_sprite = self.sprite 
 
-        # self.position = [690, 740] # Starting Position
         self.position = [830, 920] # Starting Position
         self.angle = 0
         self.speed = 0
@@ -324,19 +323,21 @@ def run_simulation(genomes, config):
             output = nets[i].activate(car.get_data())
             action = output.index(max(output))
             
-            # Turn Left
+            # --- TURN LEFT ---
             if action == 0:
                 car.angle += 10 # Left
-            # Turn Right
+            # --- TURN RIGHT ---
             elif action == 1:
                 car.angle -= 10 # Right
-            # Slow Down
+            # --- SLOW DOWN ---
             elif action == 2:
-                if(car.speed - 2 >= 12):
+                if(car.speed - 2 >= 10):
                     car.speed -= 2 # Slow Down
-            # Speed Up
+            # --- SPEED UP ---
             else:
                 car.speed += 2 # Speed Up
+                if car.speed > 100:
+                    car.speed = 100
             
             car.display_radars = args.display_radars
         
