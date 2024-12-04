@@ -15,22 +15,24 @@ import pygame
 # Constants
 # ---
 # ---
-CONFIG_FILE     = "./config.ini"
+CONFIG_FILE              = "./config.ini"
 # ---
-WIDTH           = 1920
-HEIGHT          = 1080
+WIDTH                    = 1920
+HEIGHT                   = 1080
 # ---
-CAR_SIZE_X      = 60
-CAR_SIZE_Y      = 60
+CAR_SIZE_X               = 60
+CAR_SIZE_Y               = 60
 # ---
-BORDER_COLOR    = (255, 255, 255, 255) # Color To Crash on Hit
+BORDER_COLOR             = (255, 255, 255, 255) # Color To Crash on Hit
+MAX_RADAR_SENSING_LENGTH = 500
+DEF_RADAR_SENSING_LENGTH = 300
 # ---
-MAX_GENERATIONS = 1000
-MAX_INPUTS      = 12
+MAX_GENERATIONS          = 1000
+MAX_INPUTS               = 12
 # ---
-VIEW_ANGLE      = 180
-L_VIEW_ANGLE    = -int(VIEW_ANGLE / 2)
-R_VIEW_ANGLE    = int(VIEW_ANGLE / 2)
+VIEW_ANGLE               = 180
+L_VIEW_ANGLE             = -int(VIEW_ANGLE / 2)
+R_VIEW_ANGLE             = int(VIEW_ANGLE / 2)
 # ---
 
 current_generation = 0 # Generation counter
@@ -47,6 +49,7 @@ def parse_arguments():
     parser.add_argument("-i", "--inputs", type=int, help="Number of inputs", default=0)
     parser.add_argument("-r", "--display_radars", help="Display radars", action='store_true')
     parser.add_argument("-V", "--verbose", help="Verbose mode", action='store_true')
+    parser.add_argument("-l", "--sensing_length", type=int, help="Maximum radar sensing length", default=DEF_RADAR_SENSING_LENGTH)
     
     args = parser.parse_args()
 
@@ -70,6 +73,16 @@ def parse_arguments():
                 config.write(config_file)
     else:
         args.inputs =  int(config["DefaultGenome"]["num_inputs"]) # Otherwise, keep the config value
+
+    if args.sensing_length > MAX_RADAR_SENSING_LENGTH:
+        if args.verbose:
+            print(f"=> Overriding radar sensing length: {args.sensing_length} (given) to {MAX_RADAR_SENSING_LENGTH} (max)")
+        args.sensing_length = MAX_RADAR_SENSING_LENGTH
+
+    if args.sensing_length <= 0:
+        if args.verbose:
+            print(f"=> Overriding radar sensing length: {args.sensing_length} (given) to {DEF_RADAR_SENSING_LENGTH} (default)")
+        args.sensing_length = DEF_RADAR_SENSING_LENGTH
 
     return args
 
@@ -133,7 +146,7 @@ class Car:
         y = int(self.center[1] + math.sin(math.radians(360 - (self.angle + degree))) * length)
 
         # While We Don't Hit BORDER_COLOR AND length < 300 (just a max) -> go further and further
-        while not game_map.get_at((x, y)) == BORDER_COLOR and length < 300:
+        while not game_map.get_at((x, y)) == BORDER_COLOR and length < args.sensing_length:
             length = length + 1
             x = int(self.center[0] + math.cos(math.radians(360 - (self.angle + degree))) * length)
             y = int(self.center[1] + math.sin(math.radians(360 - (self.angle + degree))) * length)
