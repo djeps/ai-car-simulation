@@ -17,6 +17,8 @@ import pygame
 # ---
 CONFIG_FILE = "./config.ini"
 # ---
+DEFAULT_SPRITE = "car01.png"
+# ---
 WIDTH = 1920 # 1920|1600
 HEIGHT = 1080 # 1080|900
 # ---
@@ -36,6 +38,8 @@ VIEW_ANGLE = 180
 L_VIEW_ANGLE = -int(VIEW_ANGLE / 2)
 R_VIEW_ANGLE = int(VIEW_ANGLE / 2)
 # ---
+ERROR_TRACK_LOAD = 1
+# ---
 
 current_generation = 0 # Generation counter
 args = None
@@ -53,6 +57,7 @@ def parse_arguments():
     parser.add_argument("-V", "--verbose", help="Verbose mode", action='store_true')
     parser.add_argument("-l", "--sensing_length", type=int, help="Radar sensing length", default=DEF_RADAR_SENSING_LENGTH)
     parser.add_argument("-s", "--car_size", type=int, help="Car size", default=5)
+    parser.add_argument("-m", "--image_map", type=str, help="Track map to load", default="map01.png")
     
     args = parser.parse_args()
 
@@ -99,6 +104,10 @@ def parse_arguments():
     
     if args.verbose:
         print(f"=> Car size (px) = {CAR_SIZES[args.car_size]}x{CAR_SIZES[args.car_size]}")
+    
+    if not os.path.exists(f"images/tracks/{args.image_map}"):
+        print(f"=> Error! Can't load track map file: images/tracks/{args.image_map}")
+        sys.exit(ERROR_TRACK_LOAD)
 
     return args
 
@@ -107,7 +116,7 @@ class Car:
 
     def __init__(self, display_radars):
         # Load Car Sprite and Rotate
-        self.sprite = pygame.image.load('car.png').convert() # Convert Speeds Up A Lot
+        self.sprite = pygame.image.load(f"images/sprites/{DEFAULT_SPRITE}").convert() # Convert Speeds Up A Lot
         self.sprite = pygame.transform.scale(self.sprite, (CAR_SIZES[args.car_size], CAR_SIZES[args.car_size]))
         self.rotated_sprite = self.sprite 
 
@@ -283,7 +292,7 @@ def run_simulation(genomes, config):
     clock = pygame.time.Clock()
     generation_font = pygame.font.SysFont("Arial", 30)
     alive_font = pygame.font.SysFont("Arial", 20)
-    game_map = pygame.image.load('map02.png').convert() # Convert Speeds Up A Lot
+    game_map = pygame.image.load(f"images/tracks/{args.image_map}").convert() # Convert Speeds Up A Lot
 
 
     global current_generation
