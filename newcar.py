@@ -1,5 +1,6 @@
 # This Code is Heavily Inspired By The YouTuber: Cheesy AI
 # Code Changed, Optimized And Commented By: NeuralNine (Florian Dedov)
+# Subsequent code changes by: Jepsonyte (Vladimir Djepovski)
 
 import math
 import random
@@ -39,6 +40,9 @@ L_VIEW_ANGLE = -int(VIEW_ANGLE / 2)
 R_VIEW_ANGLE = int(VIEW_ANGLE / 2)
 # ---
 ERROR_TRACK_LOAD = 1
+# ---
+TEXT_POS_X = 5
+TEXT_POS_Y = 5
 # ---
 
 current_generation = 0 # Generation counter
@@ -290,8 +294,9 @@ def run_simulation(genomes, config):
     # Clock Settings
     # Font Settings & Loading Map
     clock = pygame.time.Clock()
-    generation_font = pygame.font.SysFont("Arial", 30)
-    alive_font = pygame.font.SysFont("Arial", 20)
+    generation_font = pygame.font.SysFont("Consolas", 20)
+    alive_font = pygame.font.SysFont("Consolas", 20)
+    radar_status_font = pygame.font.SysFont("Consolas", 20)
     game_map = pygame.image.load(f"images/tracks/{args.image_map}").convert() # Convert Speeds Up A Lot
 
 
@@ -373,14 +378,22 @@ def run_simulation(genomes, config):
                 car.draw(screen)
         
         # Display Info
-        text = generation_font.render("Generation: " + str(current_generation), True, (0,0,0))
+        text = generation_font.render(f"Current generation: {str(current_generation)}", True, (0,0,0))
         text_rect = text.get_rect()
-        text_rect.center = (900, 450)
+        text_pos_y = TEXT_POS_Y
+        text_rect.topleft = (TEXT_POS_X, TEXT_POS_Y)
         screen.blit(text, text_rect)
 
-        text = alive_font.render("Still Alive: " + str(still_alive), True, (0, 0, 0))
+        text = alive_font.render(f"Cars still driving: {str(still_alive)}", True, (0, 0, 0))
         text_rect = text.get_rect()
-        text_rect.center = (900, 490)
+        text_pos_y += 20
+        text_rect.topleft = (TEXT_POS_X, text_pos_y)
+        screen.blit(text, text_rect)
+
+        text = radar_status_font.render(f"Radars visible: {'ON' if args.display_radars else 'OFF'}", True, (0, 0, 0))
+        text_rect = text.get_rect()
+        text_pos_y += 20
+        text_rect.topleft = (TEXT_POS_X, text_pos_y)
         screen.blit(text, text_rect)
 
         pygame.display.flip()
