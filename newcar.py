@@ -19,6 +19,7 @@ import pygame
 CONFIG_FILE = "./config.ini"
 # ---
 DEFAULT_SPRITE = "car01.png"
+DEFAULT_MAP = "map01.png"
 # ---
 WIDTH = 1920 # 1920|1600
 HEIGHT = 1080 # 1080|900
@@ -39,7 +40,8 @@ VIEW_ANGLE = 180
 L_VIEW_ANGLE = -int(VIEW_ANGLE / 2)
 R_VIEW_ANGLE = int(VIEW_ANGLE / 2)
 # ---
-ERROR_TRACK_LOAD = 1
+ERROR_SPRITE_LOAD = 2
+ERROR_TRACK_LOAD = 2
 # ---
 TEXT_POS_X = 5
 TEXT_POS_Y = 5
@@ -60,8 +62,9 @@ def parse_arguments():
     parser.add_argument("-r", "--display_radars", help="Display radars", action='store_true')
     parser.add_argument("-V", "--verbose", help="Verbose mode", action='store_true')
     parser.add_argument("-l", "--sensing_length", type=int, help="Radar sensing length", default=DEF_RADAR_SENSING_LENGTH)
-    parser.add_argument("-s", "--car_size", type=int, help="Car size", default=5)
-    parser.add_argument("-m", "--image_map", type=str, help="Track map to load", default="map01.png")
+    parser.add_argument("-S", "--car_size", type=int, help="Car size", default=5)
+    parser.add_argument("-s", "--car_sprite", type=str, help="Car sprite to load", default=DEFAULT_SPRITE)
+    parser.add_argument("-m", "--image_map", type=str, help="Track map to load", default=DEFAULT_MAP)
     
     args = parser.parse_args()
 
@@ -109,6 +112,10 @@ def parse_arguments():
     if args.verbose:
         print(f"=> Car size (px) = {CAR_SIZES[args.car_size]}x{CAR_SIZES[args.car_size]}")
     
+    if not os.path.exists(f"images/sprites/{args.car_sprite}"):
+        print(f"=> Error! Can't load car sprite file: images/sprites/{args.car_sprite}")
+        sys.exit(ERROR_SPRITE_LOAD)
+
     if not os.path.exists(f"images/tracks/{args.image_map}"):
         print(f"=> Error! Can't load track map file: images/tracks/{args.image_map}")
         sys.exit(ERROR_TRACK_LOAD)
@@ -120,7 +127,7 @@ class Car:
 
     def __init__(self, display_radars):
         # Load Car Sprite and Rotate
-        self.sprite = pygame.image.load(f"images/sprites/{DEFAULT_SPRITE}").convert() # Convert Speeds Up A Lot
+        self.sprite = pygame.image.load(f"images/sprites/{args.car_sprite}").convert() # Convert Speeds Up A Lot
         self.sprite = pygame.transform.scale(self.sprite, (CAR_SIZES[args.car_size], CAR_SIZES[args.car_size]))
         self.rotated_sprite = self.sprite 
 
