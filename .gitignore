@@ -1,4 +1,19 @@
 # VS Code folder (settings, debug configuration, etc.)
 .vscode/
 
+# Ignore pycache folder
+__pycache__/
+
+# Ignore notes TODO file
 TODO.md
+
+# Ignore generated graph representations of the neural network
+*.sample
+*.sample.svg
+nn_winner
+nn_winner.svg
+nn_winner*
+
+# Ignore saved neural network
+nn_winner.pickle
+winner.pickle

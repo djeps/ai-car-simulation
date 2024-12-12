@@ -11,6 +11,8 @@ import configparser
 
 import neat
 import pygame
+import pickle
+import visualize
 
 # ---
 # Constants
@@ -301,9 +303,9 @@ def run_simulation(genomes, config):
     # Clock Settings
     # Font Settings & Loading Map
     clock = pygame.time.Clock()
-    generation_font = pygame.font.SysFont("Consolas", 20)
-    alive_font = pygame.font.SysFont("Consolas", 20)
-    radar_status_font = pygame.font.SysFont("Consolas", 20)
+    generation_font = pygame.font.SysFont("Open Sans", 14)
+    alive_font = pygame.font.SysFont("Open Sans", 14)
+    radar_status_font = pygame.font.SysFont("Open Sans", 14)
     game_map = pygame.image.load(f"images/tracks/{args.image_map}").convert() # Convert Speeds Up A Lot
 
 
@@ -409,6 +411,11 @@ def run_simulation(genomes, config):
 if __name__ == "__main__":
     args = parse_arguments()
 
+    # Initialize PyGame And The Display
+    os.environ['SDL_VIDEO_CENTERED'] = '1'
+    pygame.init()
+    screen = pygame.display.set_mode((WIDTH, HEIGHT))
+
     # Load Config
     config_path = CONFIG_FILE
     config = neat.config.Config(neat.DefaultGenome,
@@ -423,12 +430,27 @@ if __name__ == "__main__":
     stats = neat.StatisticsReporter()
     population.add_reporter(stats)
     
-    # Initialize PyGame And The Display
-    os.environ['SDL_VIDEO_CENTERED'] = '1'
-    pygame.init()
-    screen = pygame.display.set_mode((WIDTH, HEIGHT))
+    # --- MENU ---
 
+    # --- MENU ITEM ---
+    # Start a new simulation i.e. model training
     # Run Simulation
     if args.verbose:
         print(f"=> Running simulation with max: {args.generations} generations")
-    population.run(run_simulation, args.generations)
+
+    # The winner 'genome' after args.generations 
+    winner = population.run(run_simulation, args.generations)
+    
+    # Save the winner genome
+    with open("nn_winner.pickle", "wb") as f:
+        pickle.dump(winner, f)
+
+    # --- MENU ITEM ---    
+    # Run tests with the winning genome
+    # Load it back when needed
+    with open("nn_winner.pickle", "rb") as f:
+        winner = pickle.load(f)
+
+    # --- MENU ITEM ---
+    # Display the neural network of the winning genome
+    visualize.draw_net(config, winner, view=True, filename='nn_winner')
