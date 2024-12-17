@@ -453,4 +453,8 @@ if __name__ == "__main__":
 
     # --- MENU ITEM ---
     # Display the neural network of the winning genome
-    visualize.draw_net(config, winner, view=True, filename='nn_winner')
+    node_names = {0: "Left", 1: "Right", 2: "Brake", 3: "Accelerate"}
+    for i in range(-args.inputs, 0):
+        node_names[i] = "S" + str(abs(i))
+
+    visualize.draw_net(config, winner, view=True, node_names=node_names, filename="nn_winner")
