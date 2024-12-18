@@ -182,7 +182,7 @@ class Car:
         x = int(self.center[0] + math.cos(math.radians(360 - (self.angle + degree))) * length)
         y = int(self.center[1] + math.sin(math.radians(360 - (self.angle + degree))) * length)
 
-        # While We Don't Hit BORDER_COLOR AND length < 300 (just a max) -> go further and further
+        # While We Don't Hit BORDER_COLOR AND length < args.sensing_length (just a max) -> go further and further
         while not game_map.get_at((x, y)) == BORDER_COLOR and length < args.sensing_length:
             length = length + 1
             x = int(self.center[0] + math.cos(math.radians(360 - (self.angle + degree))) * length)
@@ -201,10 +201,10 @@ class Car:
             self.speed_set = True
 
         # Get Rotated Sprite And Move Into The Right X-Direction
-        # Don't Let The Car Go Closer Than 20px To The Edge
+        # Don't Let The Car Go Closer Than 60px To The Edge
         self.rotated_sprite = self.rotate_center(self.sprite, self.angle)
         self.position[0] += math.cos(math.radians(360 - self.angle)) * self.speed
-        self.position[0] = max(self.position[0], 20)
+        self.position[0] = max(self.position[0], 60)
         self.position[0] = min(self.position[0], WIDTH - 120)
 
         # Increase Distance and Time
@@ -213,7 +213,7 @@ class Car:
         
         # Same For Y-Position
         self.position[1] += math.sin(math.radians(360 - self.angle)) * self.speed
-        self.position[1] = max(self.position[1], 20)
+        self.position[1] = max(self.position[1], 60)
         self.position[1] = min(self.position[1], WIDTH - 120)
 
         # Calculate New Center
