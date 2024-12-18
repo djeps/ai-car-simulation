@@ -129,7 +129,7 @@ class Car:
 
     def __init__(self, display_radars):
         # Load Car Sprite and Rotate
-        self.sprite = pygame.image.load(f"images/sprites/{args.car_sprite}").convert() # Convert Speeds Up A Lot
+        self.sprite = pygame.image.load(f"images/sprites/{args.car_sprite}").convert_alpha() # Convert Speeds Up A Lot
         self.sprite = pygame.transform.scale(self.sprite, (CAR_SIZES[args.car_size], CAR_SIZES[args.car_size]))
         self.rotated_sprite = self.sprite 
 
@@ -222,10 +222,10 @@ class Car:
         # Calculate Four Corners
         # Length Is Half The Side
         length = int(0.5 * CAR_SIZES[args.car_size])
-        left_top = [self.center[0] + math.cos(math.radians(360 - (self.angle + 30))) * length, self.center[1] + math.sin(math.radians(360 - (self.angle + 30))) * length]
-        right_top = [self.center[0] + math.cos(math.radians(360 - (self.angle + 150))) * length, self.center[1] + math.sin(math.radians(360 - (self.angle + 150))) * length]
-        left_bottom = [self.center[0] + math.cos(math.radians(360 - (self.angle + 210))) * length, self.center[1] + math.sin(math.radians(360 - (self.angle + 210))) * length]
-        right_bottom = [self.center[0] + math.cos(math.radians(360 - (self.angle + 330))) * length, self.center[1] + math.sin(math.radians(360 - (self.angle + 330))) * length]
+        left_top = [self.center[0] + math.cos(math.radians(360 - (self.angle + 50))) * length, self.center[1] + math.sin(math.radians(360 - (self.angle + 50))) * length]
+        right_top = [self.center[0] + math.cos(math.radians(360 - (self.angle + 130))) * length, self.center[1] + math.sin(math.radians(360 - (self.angle + 130))) * length]
+        left_bottom = [self.center[0] + math.cos(math.radians(360 - (self.angle + 230))) * length, self.center[1] + math.sin(math.radians(360 - (self.angle + 230))) * length]
+        right_bottom = [self.center[0] + math.cos(math.radians(360 - (self.angle + 310))) * length, self.center[1] + math.sin(math.radians(360 - (self.angle + 310))) * length]
         self.corners = [left_top, right_top, left_bottom, right_bottom]
 
         # Check Collisions And Clear Radars
@@ -315,18 +315,22 @@ def run_simulation(genomes, config):
     # Simple Counter To Roughly Limit Time (Not Good Practice)
     counter = 0
 
-    while True:
+    keep_running = True
+
+    while keep_running:
         for event in pygame.event.get():
             # Exit On Quit Event
             if event.type == pygame.QUIT:
                 if args.verbose:
                     print("=> Quitting simulation")
+                pygame.quit()
                 sys.exit(0)
             elif event.type == pygame.KEYDOWN:
                 # Exit when the Q button is pressed
                 if event.key == pygame.K_q:
                     if args.verbose:
                         print("=> Quitting simulation")
+                    pygame.quit()
                     sys.exit(0)
                 # Display the menu when the M button is pressed
                 elif event.key == pygame.K_m:
@@ -341,72 +345,73 @@ def run_simulation(genomes, config):
                     if args.verbose:
                         print("=> Unrecognized keystroke detected")
 
-        # For Each Car Get The Acton It Takes
-        for i, car in enumerate(cars):
-            output = nets[i].activate(car.get_data())
-            action = output.index(max(output))
+        if keep_running:
+            # For Each Car Get The Acton It Takes
+            for i, car in enumerate(cars):
+                output = nets[i].activate(car.get_data())
+                action = output.index(max(output))
+                
+                # --- TURN LEFT ---
+                if action == 0:
+                    car.angle += 10 # Left
+                # --- TURN RIGHT ---
+                elif action == 1:
+                    car.angle -= 10 # Right
+                # --- SLOW DOWN ---
+                elif action == 2:
+                    if(car.speed - 2 >= 10):
+                        car.speed -= 2 # Slow Down
+                # --- SPEED UP ---
+                else:
+                    car.speed += 2 # Speed Up
+                    if car.speed > 100:
+                        car.speed = 100
+                
+                car.display_radars = args.display_radars
             
-            # --- TURN LEFT ---
-            if action == 0:
-                car.angle += 10 # Left
-            # --- TURN RIGHT ---
-            elif action == 1:
-                car.angle -= 10 # Right
-            # --- SLOW DOWN ---
-            elif action == 2:
-                if(car.speed - 2 >= 10):
-                    car.speed -= 2 # Slow Down
-            # --- SPEED UP ---
-            else:
-                car.speed += 2 # Speed Up
-                if car.speed > 100:
-                    car.speed = 100
+            # Check If Car Is Still Alive
+            # Increase Fitness If Yes And Break Loop If Not
+            still_alive = 0
+            for i, car in enumerate(cars):
+                if car.is_alive():
+                    still_alive += 1
+                    car.update(game_map)
+                    genomes[i][1].fitness += car.get_reward()
+
+            if still_alive == 0:
+                break
+
+            counter += 1
+            if counter == 30 * 40: # Stop After About 20 Seconds
+                break
+
+            # Draw Map And All Cars That Are Alive
+            screen.blit(game_map, (0, 0))
+            for car in cars:
+                if car.is_alive():
+                    car.draw(screen)
             
-            car.display_radars = args.display_radars
-        
-        # Check If Car Is Still Alive
-        # Increase Fitness If Yes And Break Loop If Not
-        still_alive = 0
-        for i, car in enumerate(cars):
-            if car.is_alive():
-                still_alive += 1
-                car.update(game_map)
-                genomes[i][1].fitness += car.get_reward()
+            # Display Info
+            text = generation_font.render(f"Current generation: {str(current_generation)}", True, (0,0,0))
+            text_rect = text.get_rect()
+            text_pos_y = TEXT_POS_Y
+            text_rect.topleft = (TEXT_POS_X, TEXT_POS_Y)
+            screen.blit(text, text_rect)
 
-        if still_alive == 0:
-            break
+            text = alive_font.render(f"Cars still driving: {str(still_alive)}", True, (0, 0, 0))
+            text_rect = text.get_rect()
+            text_pos_y += 20
+            text_rect.topleft = (TEXT_POS_X, text_pos_y)
+            screen.blit(text, text_rect)
 
-        counter += 1
-        if counter == 30 * 40: # Stop After About 20 Seconds
-            break
+            text = radar_status_font.render(f"Radars visible: {'ON' if args.display_radars else 'OFF'}", True, (0, 0, 0))
+            text_rect = text.get_rect()
+            text_pos_y += 20
+            text_rect.topleft = (TEXT_POS_X, text_pos_y)
+            screen.blit(text, text_rect)
 
-        # Draw Map And All Cars That Are Alive
-        screen.blit(game_map, (0, 0))
-        for car in cars:
-            if car.is_alive():
-                car.draw(screen)
-        
-        # Display Info
-        text = generation_font.render(f"Current generation: {str(current_generation)}", True, (0,0,0))
-        text_rect = text.get_rect()
-        text_pos_y = TEXT_POS_Y
-        text_rect.topleft = (TEXT_POS_X, TEXT_POS_Y)
-        screen.blit(text, text_rect)
-
-        text = alive_font.render(f"Cars still driving: {str(still_alive)}", True, (0, 0, 0))
-        text_rect = text.get_rect()
-        text_pos_y += 20
-        text_rect.topleft = (TEXT_POS_X, text_pos_y)
-        screen.blit(text, text_rect)
-
-        text = radar_status_font.render(f"Radars visible: {'ON' if args.display_radars else 'OFF'}", True, (0, 0, 0))
-        text_rect = text.get_rect()
-        text_pos_y += 20
-        text_rect.topleft = (TEXT_POS_X, text_pos_y)
-        screen.blit(text, text_rect)
-
-        pygame.display.flip()
-        clock.tick(60) # 60 FPS
+            pygame.display.flip()
+            clock.tick(60) # 60 FPS
 
 if __name__ == "__main__":
     args = parse_arguments()
