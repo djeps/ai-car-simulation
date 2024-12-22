@@ -17,3 +17,6 @@ nn_winner*
 # Ignore saved neural network
 nn_winner.pickle
 winner.pickle
+
+# Sandbox/test Python file
+test.py

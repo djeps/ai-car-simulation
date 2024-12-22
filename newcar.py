@@ -66,7 +66,7 @@ def parse_arguments():
     parser.add_argument("-l", "--sensing_length", type=int, help="Radar sensing length", default=DEF_RADAR_SENSING_LENGTH)
     parser.add_argument("-S", "--car_size", type=int, help="Car size", default=5)
     parser.add_argument("-s", "--car_sprite", type=str, help="Car sprite to load", default=DEFAULT_SPRITE)
-    parser.add_argument("-m", "--image_map", type=str, help="Track map to load", default=DEFAULT_MAP)
+    parser.add_argument("-m", "--track_map", type=str, help="Track map to load", default=DEFAULT_MAP)
     
     args = parser.parse_args()
 
@@ -118,8 +118,8 @@ def parse_arguments():
         print(f"=> Error! Can't load car sprite file: images/sprites/{args.car_sprite}")
         sys.exit(ERROR_SPRITE_LOAD)
 
-    if not os.path.exists(f"images/tracks/{args.image_map}"):
-        print(f"=> Error! Can't load track map file: images/tracks/{args.image_map}")
+    if not os.path.exists(f"images/tracks/{args.track_map}"):
+        print(f"=> Error! Can't load track map file: images/tracks/{args.track_map}")
         sys.exit(ERROR_TRACK_LOAD)
 
     return args
@@ -306,7 +306,7 @@ def run_simulation(genomes, config):
     generation_font = pygame.font.SysFont("Open Sans", 14)
     alive_font = pygame.font.SysFont("Open Sans", 14)
     radar_status_font = pygame.font.SysFont("Open Sans", 14)
-    game_map = pygame.image.load(f"images/tracks/{args.image_map}").convert() # Convert Speeds Up A Lot
+    game_map = pygame.image.load(f"images/tracks/{args.track_map}").convert() # Convert Speeds Up A Lot
 
 
     global current_generation
@@ -462,4 +462,4 @@ if __name__ == "__main__":
     for i in range(-args.inputs, 0):
         node_names[i] = "S" + str(abs(i))
 
-    visualize.draw_net(config, winner, view=True, node_names=node_names, filename="nn_winner")
+    visualize.draw_net(config, winner, view=True, node_names=node_names, filename="nn_winner.png")
