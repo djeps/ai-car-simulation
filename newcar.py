@@ -462,4 +462,4 @@ if __name__ == "__main__":
     for i in range(-args.inputs, 0):
         node_names[i] = "S" + str(abs(i))
 
-    visualize.draw_net(config, winner, view=True, node_names=node_names, filename="nn_winner.png")
+    visualize.draw_net(config, winner, view=True, node_names=node_names, prune_unused=True, filename="nn_winner.png")
