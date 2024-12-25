@@ -3,6 +3,6 @@ from args import *
 from menu import *
 
 args = Args()
-menu = Menu(args, "NEAT Car Simulator")
+menu = Menu(args)
 
 menu.display()

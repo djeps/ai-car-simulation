@@ -6,6 +6,7 @@ import sys
 from constants import *
 
 class Args:
+
     def __init__(self):
         self.args = None
         self.parser = argparse.ArgumentParser()
@@ -22,6 +23,8 @@ class Args:
         self.parser.add_argument("-S", "--car_size", type=int, help="Car size", default=5)
         self.parser.add_argument("-s", "--car_sprite", type=str, help="Car sprite to load", default=DEFAULT_SPRITE)
         self.parser.add_argument("-m", "--track_map", type=str, help="Track map to load", default=DEFAULT_MAP)
+        self.parser.add_argument("-G", "--generation_interval", type=int, help="Elapsed generations when creaking a training checkpoint", default=10)
+        self.parser.add_argument("-T", "--time_interval_seconds", type=int, help="Elapsed seconds when creaking a training checkpoint", default=300)
 
         self.args = self.parser.parse_args()
 
@@ -33,8 +36,11 @@ class Args:
         self.car_size = self.args.car_size
         self.car_sprite = self.args.car_sprite
         self.track_map = self.args.track_map
+        self.generation_interval = self.args.generation_interval
+        self.time_interval_seconds = self.args.time_interval_seconds
     
         self.__check_arguments__()
+
 
     def __check_arguments__(self):
         self.__check_generations__()
@@ -44,9 +50,11 @@ class Args:
         self.__check_car_sprite__()
         self.__check_image_map__()
 
+
     def __check_generations__(self):
         if self.generations > MAX_GENERATIONS:
             self.generations = MAX_GENERATIONS
+
 
     def __update_config__(self, section, setting, value):
         # The number of inputs was specified from the command line
@@ -62,14 +70,17 @@ class Args:
         else:
             self.inputs =  int(self.config[section][setting]) # Otherwise, keep the config value
 
+
     def __check_inputs__(self):
         section = "DefaultGenome"
         setting = "num_inputs"
 
         self.__update_config__(section, setting, self.inputs)
 
+
     def update_config(self, section, setting, value):
         self.__update_config__(section, setting, value)
+
 
     def __check_sensing_length__(self):
         if self.sensing_length > MAX_RADAR_SENSING_LENGTH:
@@ -81,6 +92,7 @@ class Args:
             if self.verbose:
                 print(f"=> Overriding radar sensing length: {self.sensing_length} (given) to {DEFAULT_RADAR_SENSING_LENGTH} (default)")
             self.sensing_length = DEFAULT_RADAR_SENSING_LENGTH
+
 
     def __check_car_size__(self):
         if self.car_size > len(CAR_SIZES) - 1:
@@ -96,10 +108,12 @@ class Args:
         if self.verbose:
             print(f"=> Car size (px) = {CAR_SIZES[self.car_size]}x{CAR_SIZES[self.car_size]}")
 
+
     def __check_car_sprite__(self):
         if not os.path.exists(f"images/sprites/{self.car_sprite}"):
             print(f"=> Error! Can't load car sprite file: images/sprites/{self.car_sprite}")
             sys.exit(ERROR_SPRITE_LOAD)
+
 
     def __check_image_map__(self):
         if not os.path.exists(f"images/tracks/{self.track_map}"):

@@ -8,9 +8,13 @@ EXIT_SUCCESS      = 0
 ERROR_SPRITE_LOAD = 2
 ERROR_TRACK_LOAD  = 2
 
-# Screen size
-WIDTH = 1920
-HEIGHT = 1080
+# Screen
+WIDTH       = 1920
+HEIGHT      = 1080
+BLACK_COLOR = (0, 0, 0)
+WHITE_COLOR = (255, 255, 255)
+BACKGROUND  = WHITE_COLOR
+FOREGROUND  = BLACK_COLOR
 
 # Sprite size and position
 CAR_SIZES                = (10, 20, 30, 40, 50, 60, 70, 80, 90)

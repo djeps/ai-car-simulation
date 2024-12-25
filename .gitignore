@@ -15,8 +15,15 @@ nn_winner.svg
 nn_winner*
 
 # Ignore saved neural network
-nn_winner.pickle
-winner.pickle
+nn_winner.pkl
+winner.pkl
 
 # Sandbox/test Python file
 test.py
+
+# Copy of the last working original/standalone simulation
+newcar.bak.py
+
+# Checkpoint files
+neat-checkpoint-*
+neat-generations

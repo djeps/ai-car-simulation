@@ -14,40 +14,8 @@ import pygame
 import pickle
 import visualize
 
-# ---
-# Constants
-# ---
-# ---
-CONFIG_FILE = "./config.ini"
-# ---
-DEFAULT_SPRITE = "car01.png"
-DEFAULT_MAP = "map01.png"
-# ---
-WIDTH = 1920 # 1920|1600
-HEIGHT = 1080 # 1080|900
-# ---
-CAR_SIZES = (10, 20, 30, 40, 50, 60, 70, 80, 90)
-# ---
-CAR_SIZE_X = 60
-CAR_SIZE_Y = 60
-# ---
-BORDER_COLOR = (255, 255, 255, 255) # Color To Crash on Hit
-MAX_RADAR_SENSING_LENGTH = 500
-DEF_RADAR_SENSING_LENGTH = 300
-# ---
-MAX_GENERATIONS = 1000
-MAX_INPUTS = 12
-# ---
-VIEW_ANGLE = 180
-L_VIEW_ANGLE = -int(VIEW_ANGLE / 2)
-R_VIEW_ANGLE = int(VIEW_ANGLE / 2)
-# ---
-ERROR_SPRITE_LOAD = 2
-ERROR_TRACK_LOAD = 2
-# ---
-TEXT_POS_X = 5
-TEXT_POS_Y = 5
-# ---
+from constants import *
+from neat.checkpoint import Checkpointer
 
 current_generation = 0 # Generation counter
 args = None
@@ -63,7 +31,7 @@ def parse_arguments():
     parser.add_argument("-i", "--inputs", type=int, help="Number of inputs", default=0)
     parser.add_argument("-r", "--display_radars", help="Display radars", action='store_true')
     parser.add_argument("-V", "--verbose", help="Verbose mode", action='store_true')
-    parser.add_argument("-l", "--sensing_length", type=int, help="Radar sensing length", default=DEF_RADAR_SENSING_LENGTH)
+    parser.add_argument("-l", "--sensing_length", type=int, help="Radar sensing length", default=DEFAULT_RADAR_SENSING_LENGTH)
     parser.add_argument("-S", "--car_size", type=int, help="Car size", default=5)
     parser.add_argument("-s", "--car_sprite", type=str, help="Car sprite to load", default=DEFAULT_SPRITE)
     parser.add_argument("-m", "--track_map", type=str, help="Track map to load", default=DEFAULT_MAP)
@@ -98,8 +66,8 @@ def parse_arguments():
 
     if args.sensing_length <= 0:
         if args.verbose:
-            print(f"=> Overriding radar sensing length: {args.sensing_length} (given) to {DEF_RADAR_SENSING_LENGTH} (default)")
-        args.sensing_length = DEF_RADAR_SENSING_LENGTH
+            print(f"=> Overriding radar sensing length: {args.sensing_length} (given) to {DEFAULT_RADAR_SENSING_LENGTH} (default)")
+        args.sensing_length = DEFAULT_RADAR_SENSING_LENGTH
     
     if args.car_size > len(CAR_SIZES) - 1:
         if args.verbose:
@@ -123,6 +91,10 @@ def parse_arguments():
         sys.exit(ERROR_TRACK_LOAD)
 
     return args
+
+
+class TerminationException(Exception):
+    pass
 
 
 class Car:
@@ -323,15 +295,15 @@ def run_simulation(genomes, config):
             if event.type == pygame.QUIT:
                 if args.verbose:
                     print("=> Quitting simulation")
-                pygame.quit()
-                sys.exit(0)
+                keep_running = False
+                raise TerminationException("Desired fitness achieved! Aborting further training...")
             elif event.type == pygame.KEYDOWN:
                 # Exit when the Q button is pressed
-                if event.key == pygame.K_q:
+                if event.key == pygame.K_q or event.key == pygame.K_ESCAPE:
                     if args.verbose:
                         print("=> Quitting simulation")
-                    pygame.quit()
-                    sys.exit(0)
+                    keep_running = False
+                    raise TerminationException("Desired fitness achieved! Aborting further training...")
                 # Display the menu when the M button is pressed
                 elif event.key == pygame.K_m:
                     if args.verbose:
@@ -413,6 +385,7 @@ def run_simulation(genomes, config):
             pygame.display.flip()
             clock.tick(60) # 60 FPS
 
+
 if __name__ == "__main__":
     args = parse_arguments()
 
@@ -431,35 +404,37 @@ if __name__ == "__main__":
 
     # Create Population And Add Reporters
     population = neat.Population(config)
+    
     population.add_reporter(neat.StdOutReporter(True))
     stats = neat.StatisticsReporter()
     population.add_reporter(stats)
-    
-    # --- MENU ---
 
-    # --- MENU ITEM ---
     # Start a new simulation i.e. model training
     # Run Simulation
     if args.verbose:
         print(f"=> Running simulation with max: {args.generations} generations")
 
-    # The winner 'genome' after args.generations 
-    winner = population.run(run_simulation, args.generations)
-    
-    # Save the winner genome
-    with open("nn_winner.pickle", "wb") as f:
-        pickle.dump(winner, f)
+    try:
+        # The winner 'genome' after args.generations 
+        winner = population.run(run_simulation, args.generations)
 
-    # --- MENU ITEM ---    
+        # Save the winner genome
+        with open("nn_winner.pkl", "wb") as f:
+            pickle.dump(winner, f)
+    except TerminationException as e:
+        print(f"Evolution terminated: {e}")
+   
     # Run tests with the winning genome
     # Load it back when needed
-    with open("nn_winner.pickle", "rb") as f:
+    with open("nn_winner.pkl", "rb") as f:
         winner = pickle.load(f)
 
-    # --- MENU ITEM ---
     # Display the neural network of the winning genome
     node_names = {0: "Left", 1: "Right", 2: "Brake", 3: "Accelerate"}
     for i in range(-args.inputs, 0):
         node_names[i] = "S" + str(abs(i))
 
-    visualize.draw_net(config, winner, view=True, node_names=node_names, prune_unused=True, filename="nn_winner.png")
+    visualize.draw_net(config, winner, view=False, node_names=node_names, filename="nn_winner", fmt="png")
+
+    pygame.quit()
+    sys.exit(0)

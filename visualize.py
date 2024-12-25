@@ -139,6 +139,7 @@ def draw_net(config, genome, view=False, filename=None, node_names=None, show_di
         'width': '0.2'}
 
     dot = graphviz.Digraph(format=fmt, node_attr=node_attrs)
+    dot.graph_attr['bgcolor'] = 'white' 
 
     inputs = set()
     for k in config.genome_config.input_keys:
