@@ -254,6 +254,8 @@ class Menu():
         if self.args.verbose:
             print("=> Setting track obstacles")
 
+        self.neat_algo.set_track_obstacles(self.args.track_map)
+
 
     def __menu_item_quit__(self):
         self.game_env.quit()

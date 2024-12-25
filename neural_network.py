@@ -37,6 +37,7 @@ class NeatAlgo:
 
             self.generations_remaining = 0
             self.keep_running = True
+            self.use_obstacles = False
         
             self.neat_config = self.__load_config__(CONFIG_FILE)
         else:
@@ -219,6 +220,7 @@ class NeatAlgo:
             self.neat_generations = neat_generations - self.__get_checkpoint__()[0]
             self.generations_remaining = self.neat_generations
 
+        self.generations_remaining += 1
         self.neat_population = self.__create_population__(self.neat_config, new_training)
 
         # Start/continue a model training
@@ -281,6 +283,55 @@ class NeatAlgo:
     def test_nn(self, sprite, map):
         if self.pygame_is_initialized:
             self.__test_run__(self.args.car_sprite, self.args.track_map)
+        else:
+            raise Exception("PyGame is NOT initialized!")
+    
+
+    def __set_track_obstacles__(self, map):
+        keep_running = True
+        game_map = pygame.image.load(f"images/tracks/{self.args.track_map}").convert() # Convert Speeds Up A Lot
+
+        obstacles_font = pygame.font.SysFont("Open Sans", 14)
+
+        while keep_running:
+            for event in pygame.event.get():
+                # Exit On Quit Event
+                if event.type == pygame.QUIT:
+                    if self.args.verbose:
+                        print("=> Quitting setting obstacles")
+                    
+                    keep_running = False
+                elif event.type == pygame.KEYDOWN:
+                    # Exit when the Q button is pressed
+                    if event.key == pygame.K_q or event.key == pygame.K_ESCAPE:
+                        if self.args.verbose:
+                            print("=> Quitting simulation")
+                        
+                        keep_running = False
+                    elif event.key == pygame.K_e:
+                        self.use_obstacles = self.use_obstacles ^ True # Toggle using obstacles
+
+                        if self.args.verbose:
+                            print(f"=> Using obstacles: {self.use_obstacles}")
+                    else:
+                        if self.args.verbose:
+                            print("=> Unrecognized keystroke detected")
+            
+                self.screen.blit(game_map, (0, 0))
+                
+                text = obstacles_font.render(f"Using obstacles for the next training session: {self.use_obstacles}", True, (0,0,0))
+                text_rect = text.get_rect()
+                text_pos_y = TEXT_POS_Y
+                text_rect.topleft = (TEXT_POS_X, TEXT_POS_Y)
+                self.screen.blit(text, text_rect)
+
+                pygame.display.flip()
+                self.clock.tick(60) # 60 FPS
+
+
+    def set_track_obstacles(self, map):
+        if self.pygame_is_initialized:
+            self.__set_track_obstacles__(self.args.track_map)
         else:
             raise Exception("PyGame is NOT initialized!")
 
