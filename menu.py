@@ -195,23 +195,27 @@ class Menu():
         self.current_menu = self.select_track_menu
 
 
-    def __load_nn_winner__(self, winner):
+    def __load_nn_winner__(self, winner=None, test_run=False):
         if winner is None:
             if self.args.verbose:
-                print("=> The training did NOT complete")
+                print("=> Loading an older winner neural network (nn_winner.pkl)...")
             
             if os.path.exists("nn_winner.pkl"):
                 with open("nn_winner.pkl", "rb") as f:
                     winner = pickle.load(f)
-                    self.neat_algo.generate_nn_image(winner, recent=False)
+                    
+                    recent = False
+                    if test_run:
+                        recent = True
 
-                    if self.args.verbose:
-                        print("=> Loading an older winner neural network (nn_winner.pkl)...")
+                    self.neat_algo.generate_nn_image(winner, recent)
             else:
                 if self.args.verbose:
                     print("=> Nothing to load (nn_winner.pkl)!")
         else:
             self.neat_algo.generate_nn_image(winner)
+        
+        return winner
 
 
     def __menu_item_start_new_training__(self):
@@ -239,9 +243,9 @@ class Menu():
         if self.args.verbose:
             print("=> Starting a test run session")
         
-        self.neat_algo.test_nn(self.args.car_sprite, self.args.track_map)
+        winner = self.__load_nn_winner__(test_run=True)
+        self.neat_algo.test_nn(self.args.car_sprite, self.args.track_map, winner)
         
-
 
     def __menu_item_display_neural_network__(self):
         if self.args.verbose:

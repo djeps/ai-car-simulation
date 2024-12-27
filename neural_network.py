@@ -40,6 +40,7 @@ class NeatAlgo:
             self.use_obstacles = False
         
             self.neat_config = self.__load_config__(CONFIG_FILE)
+            self.trained_nn = None
         else:
             raise Exception("PyGame is not initialized!")
 
@@ -142,24 +143,8 @@ class NeatAlgo:
                 # For Each Car Get The Acton It Takes
                 for i, car in enumerate(cars):
                     output = nets[i].activate(car.get_data())
-                    action = output.index(max(output))
-                    
-                    # --- TURN LEFT ---
-                    if action == 0:
-                        car.angle += 10 # Left
-                    # --- TURN RIGHT ---
-                    elif action == 1:
-                        car.angle -= 10 # Right
-                    # --- SLOW DOWN ---
-                    elif action == 2:
-                        if(car.speed - 2 >= 10):
-                            car.speed -= 2 # Slow Down
-                    # --- SPEED UP ---
-                    else:
-                        car.speed += 2 # Speed Up
-                        if car.speed > 100:
-                            car.speed = 100
-                    
+                    nn_action = output.index(max(output))
+                    car.action(nn_action)
                     car.display_radars = self.args.display_radars
                 
                 # Check If Car Is Still Alive
@@ -246,9 +231,37 @@ class NeatAlgo:
         return winner
 
 
-    def __test_run__(self, sprite, map):
+    def get_num_inputs(self, genome):
+        if not genome.connections:  # If there are no connections, we can't infer inputs
+            return 0
+        
+        all_nodes = set()
+        output_nodes = set()
+        
+        for key, conn in genome.connections.items():
+            input_node, output_node = key
+            all_nodes.add(input_node)
+            all_nodes.add(output_node)
+            output_nodes.add(output_node)
+        
+        input_nodes = all_nodes - output_nodes
+
+        return len(input_nodes)
+
+
+    def __test_run__(self, sprite, map, winner):
         keep_running = True
-        game_map = pygame.image.load(f"images/tracks/{self.args.track_map}").convert() # Convert Speeds Up A Lot
+        game_map = pygame.image.load(f"images/tracks/{self.args.track_map}").convert()
+        
+        self.trained_nn = neat.nn.FeedForwardNetwork.create(winner, self.neat_config)
+
+        # Get the number of inputs directly from the winning genome (trained neural network)
+        num_inputs = self.get_num_inputs(winner)
+
+        radar_status_font = pygame.font.SysFont("Open Sans", 14)
+
+        car = Car(self.args)
+        still_alive = False
 
         while keep_running:
             for event in pygame.event.get():
@@ -274,17 +287,40 @@ class NeatAlgo:
                         if self.args.verbose:
                             print("=> Unrecognized keystroke detected")
             
-                self.screen.blit(game_map, (0, 0))
-                
-                pygame.display.flip()
-                self.clock.tick(60) # 60 FPS
+            nn_output = self.trained_nn.activate(car.get_data())
+            nn_action = nn_output.index(max(nn_output))
+            car.action(nn_action)
+            car.display_radars = self.args.display_radars # Update in case the user toggles this option during the run
+
+            if car.is_alive():
+                car.update(game_map)
+            else:
+                keep_running = False
+                # GAME OVER
+
+
+            self.screen.blit(game_map, (0, 0))
+            car.draw(self.screen)
+            
+            # Display Info
+            text = radar_status_font.render(f"Radars visible: {'ON' if self.args.display_radars else 'OFF'}", True, (0, 0, 0))
+            text_rect = text.get_rect()
+            text_pos_y = TEXT_POS_Y
+            text_rect.topleft = (TEXT_POS_X, TEXT_POS_Y)
+            self.screen.blit(text, text_rect)
+            
+            pygame.display.flip()
+            self.clock.tick(60) # 60 FPS
 
     
-    def test_nn(self, sprite, map):
-        if self.pygame_is_initialized:
-            self.__test_run__(self.args.car_sprite, self.args.track_map)
-        else:
+    def test_nn(self, sprite, map, winner):
+        if not self.pygame_is_initialized:
             raise Exception("PyGame is NOT initialized!")
+        
+        if winner is None:
+            raise Exception("No previous training has been found! Aborting.")
+        
+        self.__test_run__(self.args.car_sprite, self.args.track_map, winner)
     
 
     def __set_track_obstacles__(self, map):

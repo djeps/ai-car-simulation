@@ -173,3 +173,17 @@ class Car:
         rotated_image = rotated_image.subsurface(rotated_rectangle).copy()
         
         return rotated_image
+
+
+    def action(self, nn_action):
+        if nn_action == 0:
+            self.angle += 10 # Turn LEFT
+        elif nn_action == 1:
+            self.angle -= 10 # Turn RIGHT
+        elif nn_action == 2:
+            if(self.speed - 2 >= 10):
+                self.speed -= 2 # Slow DOWN
+        else:
+            self.speed += 2 # Speed UP
+            if self.speed > 100:
+                self.speed = 100
