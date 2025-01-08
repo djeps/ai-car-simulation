@@ -1,13 +1,16 @@
+import os
+import random
+import glob
 import neat
 import pygame
 import pickle
 import visualize
-import glob
 
 from constants import *
 from args import *
 from car import *
 from game import *
+from obstacle import *
 
 from neat.checkpoint import Checkpointer
 
@@ -32,6 +35,10 @@ class NeatAlgo:
             if not isinstance(game_env, GameEnvironment):
                 raise TypeError("'game_env' is not of type 'GameEnvironment'!")
             
+            self.TIMER_EVENT = pygame.USEREVENT + 1
+            pygame.time.set_timer(self.TIMER_EVENT, 1000)
+            self.tick_second = False
+
             self.screen = self.game_env.get_screen()
             self.clock = self.game_env.get_clock()
 
@@ -41,6 +48,10 @@ class NeatAlgo:
         
             self.neat_config = self.__load_config__(CONFIG_FILE)
             self.trained_nn = None
+            self.obstacles = dict()
+            self.bz_backgrounds = list()
+
+            self.game_map = pygame.image.load(f"images/tracks/{self.args.track_map}").convert()
         else:
             raise Exception("PyGame is not initialized!")
 
@@ -109,11 +120,13 @@ class NeatAlgo:
         generation_font = pygame.font.SysFont("Open Sans", 14)
         alive_font = pygame.font.SysFont("Open Sans", 14)
         radar_status_font = pygame.font.SysFont("Open Sans", 14)
-        game_map = pygame.image.load(f"images/tracks/{self.args.track_map}").convert() # Convert Speeds Up A Lot
 
         self.generations_remaining -= 1
 
+        game_map = self.game_map
+
         while keep_running:
+            # --- Event processing ---
             for event in pygame.event.get():
                 # Exit On Quit Event
                 if event.type == pygame.QUIT:
@@ -122,6 +135,7 @@ class NeatAlgo:
                     
                     keep_running = False
                     raise TerminationException("=> Desired fitness achieved! Aborting further training...")
+                
                 elif event.type == pygame.KEYDOWN:
                     # Exit when the Q button is pressed
                     if event.key == pygame.K_q or event.key == pygame.K_ESCAPE:
@@ -130,6 +144,7 @@ class NeatAlgo:
                         
                         keep_running = False
                         raise TerminationException("=> Desired fitness achieved! Aborting further training...")
+                    
                     elif event.key == pygame.K_r:
                         self.args.display_radars = self.args.display_radars ^ True
                         
@@ -139,57 +154,64 @@ class NeatAlgo:
                         if self.args.verbose:
                             print("=> Unrecognized keystroke detected")
 
-            if keep_running:
-                # For Each Car Get The Acton It Takes
-                for i, car in enumerate(cars):
-                    output = nets[i].activate(car.get_data())
-                    nn_action = output.index(max(output))
-                    car.action(nn_action)
-                    car.display_radars = self.args.display_radars
-                
-                # Check If Car Is Still Alive
-                # Increase Fitness If Yes And Break Loop If Not
-                still_alive = 0
-                for i, car in enumerate(cars):
-                    if car.is_alive():
-                        still_alive += 1
-                        car.update(game_map)
-                        genomes[i][1].fitness += car.get_reward()
+                elif event.type == self.TIMER_EVENT:
+                    self.tick_second = True
 
-                if still_alive == 0:
-                    break
+            self.screen.blit(game_map, (0, 0))
+            
+            # For Each Car Get The Acton It Takes
+            for i, car in enumerate(cars):
+                output = nets[i].activate(car.get_data())
+                nn_action = output.index(max(output))
+                car.action(nn_action)
+                car.display_radars = self.args.display_radars
+            
+            # Check If Car Is Still Alive
+            # Increase Fitness If Yes And Break Loop If Not
+            still_alive = 0
+            for i, car in enumerate(cars):
+                if car.is_alive():
+                    still_alive += 1
+                    car.update(game_map)
+                    genomes[i][1].fitness += car.get_reward()
 
-                counter += 1
-                if counter == 30 * 40: # Stop After About 20 Seconds
-                    break
+            if still_alive == 0:
+                keep_running = False
 
-                # Draw Map And All Cars That Are Alive
-                self.screen.blit(game_map, (0, 0))
-                for car in cars:
-                    if car.is_alive():
-                        car.draw(self.screen)
-                
-                # Display Info
-                text = generation_font.render(f"Generations remaining: {str(self.generations_remaining)}/{str(self.args.generations)}", True, (0,0,0))
-                text_rect = text.get_rect()
-                text_pos_y = TEXT_POS_Y
-                text_rect.topleft = (TEXT_POS_X, TEXT_POS_Y)
-                self.screen.blit(text, text_rect)
+            counter += 1
+            if counter == 30 * 40: # Stop After About 20 Seconds
+                keep_running = False
 
-                text = alive_font.render(f"Cars still driving: {str(still_alive)}", True, (0, 0, 0))
-                text_rect = text.get_rect()
-                text_pos_y += 20
-                text_rect.topleft = (TEXT_POS_X, text_pos_y)
-                self.screen.blit(text, text_rect)
+            # Draw Map And All Cars That Are Alive
+            for car in cars:
+                if car.is_alive():
+                    car.draw(self.screen)
+            
+            if self.args.enable_obstacles:                
+                self.__display_obstacles__(game_map)
 
-                text = radar_status_font.render(f"Radars visible: {'ON' if self.args.display_radars else 'OFF'}", True, (0, 0, 0))
-                text_rect = text.get_rect()
-                text_pos_y += 20
-                text_rect.topleft = (TEXT_POS_X, text_pos_y)
-                self.screen.blit(text, text_rect)
+            # --- Updating the display/text info ---
+            text = generation_font.render(f"Generations remaining: {str(self.generations_remaining)}/{str(self.args.generations)}", True, (0,0,0))
+            text_rect = text.get_rect()
+            text_pos_y = TEXT_POS_Y
+            text_rect.topleft = (TEXT_POS_X, TEXT_POS_Y)
+            self.screen.blit(text, text_rect)
 
-                pygame.display.flip()
-                self.clock.tick(60) # 60 FPS
+            text = alive_font.render(f"Cars still driving: {str(still_alive)}", True, (0, 0, 0))
+            text_rect = text.get_rect()
+            text_pos_y += 20
+            text_rect.topleft = (TEXT_POS_X, text_pos_y)
+            self.screen.blit(text, text_rect)
+
+            text = radar_status_font.render(f"Radars visible: {'ON' if self.args.display_radars else 'OFF'}", True, (0, 0, 0))
+            text_rect = text.get_rect()
+            text_pos_y += 20
+            text_rect.topleft = (TEXT_POS_X, text_pos_y)
+            self.screen.blit(text, text_rect)
+
+            # --- Updating the display ---
+            pygame.display.flip()
+            self.clock.tick(60) # 60 FPS
 
 
     def train_nn(self, sprite, map, new_training=True, neat_generations=0):
@@ -249,9 +271,68 @@ class NeatAlgo:
         return len(input_nodes)
 
 
+    def __copy_bz_background__(self, surface, x, y, width, height):
+        # Get a copy of the surface before drawing the bounding zone        
+        bz_copy = pygame.Surface((width, height))
+        bz_copy.blit(self.game_map, (0, 0), (x, y, width, height))
+        self.bz_backgrounds.append((x, y, bz_copy))
+
+
+    def __draw_obstacle__(self, surface, obstacle):
+        bz_center = obstacle.get_center()
+        bz_radius = obstacle.get_height() // 2
+        bz_pen_width = 7
+
+        # Draw a bounding zone around the obstacle
+        pygame.draw.circle(surface, OBSTACLE_BORDER_COLOR, bz_center, bz_radius, bz_pen_width)
+
+        self.screen.blit(obstacle.sprite, obstacle.get_rect())
+
+
+    def __display_obstacles__(self, game_map):
+        if self.args.track_map in self.obstacles:
+
+            # Check and update on each second what obstacle needs to be displayed
+            if self.tick_second:
+                # Create a SystemRandom instance
+                system_random = random.SystemRandom()
+                # .. and using that instance as an entropy source, generate a random number
+                random_number = system_random.randint(0, len(self.obstacles[self.args.track_map]) - 1)
+
+                for i in range(0, len(self.obstacles[self.args.track_map])):
+                    o = self.obstacles[self.args.track_map][i]
+                    o.draw = False
+
+                    if o.enabled:
+                        if o.elapsed > o.time:
+                            o.elapsed = 0
+                        else:
+                            if (o.elapsed == 0 and random_number == i) or o.elapsed > 0:
+                                o.elapsed += 1
+                                o.draw = True
+                    
+                    # Update the list element
+                    self.obstacles[self.args.track_map][i] = o
+
+                # We reset until the next 1s event is triggered
+                self.tick_second = False
+            
+            # Then go through all obstalces once again and display only those which are flagged
+            for i in range(0, len(self.obstacles[self.args.track_map])):
+                # Redraw the backgrounds before the bounding zones
+                bz_copy = self.bz_backgrounds[i][2]
+                x = self.bz_backgrounds[i][0]
+                y = self.bz_backgrounds[i][1]
+                self.game_map.blit(bz_copy, (x, y))
+
+                o = self.obstacles[self.args.track_map][i]
+                
+                if o.draw:
+                    self.__draw_obstacle__(game_map, o)
+
+
     def __test_run__(self, sprite, map, winner):
         keep_running = True
-        game_map = pygame.image.load(f"images/tracks/{self.args.track_map}").convert()
         
         self.trained_nn = neat.nn.FeedForwardNetwork.create(winner, self.neat_config)
 
@@ -261,9 +342,14 @@ class NeatAlgo:
         radar_status_font = pygame.font.SysFont("Open Sans", 14)
 
         car = Car(self.args)
-        still_alive = False
 
         while keep_running:
+            # --- Re-drawing the game map/surface ---
+            game_map = self.game_map
+            self.screen.fill(BACKGROUND)
+            self.screen.blit(self.game_map, (0, 0))
+
+            # --- Event processing ---
             for event in pygame.event.get():
                 # Exit On Quit Event
                 if event.type == pygame.QUIT:
@@ -283,32 +369,42 @@ class NeatAlgo:
                         
                         if self.args.verbose:
                             print(f"=> Activate radar display: {self.args.display_radars}")
+
                     else:
                         if self.args.verbose:
                             print("=> Unrecognized keystroke detected")
+                
+                elif event.type == self.TIMER_EVENT:
+                        self.tick_second = True
             
+            # Car actions according to the trained model
             nn_output = self.trained_nn.activate(car.get_data())
             nn_action = nn_output.index(max(nn_output))
             car.action(nn_action)
             car.display_radars = self.args.display_radars # Update in case the user toggles this option during the run
 
+            # --- Updating the car on the screen ---
             if car.is_alive():
                 car.update(game_map)
+                car.draw(self.screen)
             else:
                 keep_running = False
-                # GAME OVER
 
+                if (self.args.verbose):
+                    print("=> GAME OVER!")
 
-            self.screen.blit(game_map, (0, 0))
-            car.draw(self.screen)
+            # --- Updating the obstacles ---
+            if self.args.enable_obstacles:                
+                self.__display_obstacles__(game_map)
             
-            # Display Info
+            # --- Updating the display/text info ---
             text = radar_status_font.render(f"Radars visible: {'ON' if self.args.display_radars else 'OFF'}", True, (0, 0, 0))
             text_rect = text.get_rect()
             text_pos_y = TEXT_POS_Y
-            text_rect.topleft = (TEXT_POS_X, TEXT_POS_Y)
+            text_rect.topleft = (TEXT_POS_X, text_pos_y)
             self.screen.blit(text, text_rect)
-            
+
+            # --- Updating the display ---
             pygame.display.flip()
             self.clock.tick(60) # 60 FPS
 
@@ -323,51 +419,171 @@ class NeatAlgo:
         self.__test_run__(self.args.car_sprite, self.args.track_map, winner)
     
 
-    def __set_track_obstacles__(self, map):
-        keep_running = True
-        game_map = pygame.image.load(f"images/tracks/{self.args.track_map}").convert() # Convert Speeds Up A Lot
+    def __update_obstacles__(self, obstacle):
+        obstacle_count = 0
 
+        if self.args.track_map in self.obstacles:
+            obstacle_count = len(self.obstacles[self.args.track_map])
+
+        if obstacle.position[0] and obstacle.position[1]:
+            if self.args.track_map not in self.obstacles:
+                self.obstacles[self.args.track_map] = [obstacle]
+                obstacle_count = 1
+            else:
+                self.obstacles[self.args.track_map].append(obstacle)
+                obstacle_count += 1
+
+        return obstacle_count
+
+
+    def __set_track_obstacles__(self, track_map):
+        keep_running = True
+
+        obstacles_count = len(self.obstacles[self.args.track_map]) if (self.args.track_map in self.obstacles) else 0
+        obstacle = Obstacle(4, 10, True, (0, 0))
         obstacles_font = pygame.font.SysFont("Open Sans", 14)
 
+
         while keep_running:
+            # --- Re-drawing the game map/surface ---
+            game_map = self.game_map
+            self.screen.fill(BACKGROUND)
+            self.screen.blit(game_map, (0, 0))
+
+            # --- Event processing ---
             for event in pygame.event.get():
                 # Exit On Quit Event
                 if event.type == pygame.QUIT:
                     if self.args.verbose:
-                        print("=> Quitting setting obstacles")
-                    
+                        print("=> Done setting obstacles")
                     keep_running = False
+
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    obstacle.set_position(pygame.mouse.get_pos())
+
                 elif event.type == pygame.KEYDOWN:
                     # Exit when the Q button is pressed
                     if event.key == pygame.K_q or event.key == pygame.K_ESCAPE:
                         if self.args.verbose:
-                            print("=> Quitting simulation")
-                        
+                            print("=> Done setting obstacles")
                         keep_running = False
+
                     elif event.key == pygame.K_e:
                         self.use_obstacles = self.use_obstacles ^ True # Toggle using obstacles
-
                         if self.args.verbose:
                             print(f"=> Using obstacles: {self.use_obstacles}")
+
+                    elif event.key == pygame.K_RIGHT:
+                        obstacle.size += 1
+                        if obstacle.size > 8:
+                            obstacle.size = 8
+                        obstacle.rescale_sprite()
+
+                    elif event.key == pygame.K_LEFT:
+                        obstacle.size -= 1
+                        if obstacle.size < 0:
+                            obstacle.size = 0
+                        obstacle.rescale_sprite()
+
+                    elif event.key == pygame.K_UP:
+                        obstacle.time += 5
+
+                    elif event.key == pygame.K_DOWN:
+                        obstacle.time -= 5
+                        if obstacle.time < 0:
+                            obstacle.time = 0
+
+                    elif event.key == pygame.K_s:
+                        obstacle.enabled = obstacle.enabled ^ True
+
+                    elif event.key == pygame.K_n:
+                        bz_x = obstacle.get_x()
+                        bz_y = obstacle.get_y()
+                        bz_w = obstacle.get_width()
+                        bz_h = obstacle.get_height()
+                        self.__copy_bz_background__(self.game_map, bz_x, bz_y, bz_w, bz_h)
+                        obstacles_count = self.__update_obstacles__(obstacle)
+                        
+                        obstacle = Obstacle(4, 10, True, (0, 0))
                     else:
                         if self.args.verbose:
                             print("=> Unrecognized keystroke detected")
+
+            # --- Updating the obstacle sprites ---
+            if obstacle.position[0] and obstacle.position[1]:
+                self.__draw_obstacle__(self.screen, obstacle)
+
+            if self.args.track_map in self.obstacles:
+                for o in self.obstacles[self.args.track_map]:
+                    self.__draw_obstacle__(self.screen, o)
+
+            # --- Updating the display/text info ---
+            text = obstacles_font.render(f"Using obstacles for the next training session: {self.use_obstacles}", True, (0,0,0))
+            text_rect = text.get_rect()
+            text_pos_y = TEXT_POS_Y
+            text_rect.topleft = (TEXT_POS_X, text_pos_y)
+            self.screen.blit(text, text_rect)
+
+            text = obstacles_font.render(f"Total obstacles: {obstacles_count}", True, (0,0,0))
+            text_rect = text.get_rect()
+            text_pos_y += 20
+            text_rect.topleft = (TEXT_POS_X, text_pos_y)
+            self.screen.blit(text, text_rect)
+
+            text = obstacles_font.render(f"Current obstacle size: {obstacle.size}", True, (0,0,0))
+            text_rect = text.get_rect()
+            text_pos_y += 20
+            text_rect.topleft = (TEXT_POS_X, text_pos_y)
+            self.screen.blit(text, text_rect)
+
+            text = obstacles_font.render(f"Current obstacle time (s): {obstacle.time}", True, (0,0,0))
+            text_rect = text.get_rect()
+            text_pos_y += 20
+            text_rect.topleft = (TEXT_POS_X, text_pos_y)
+            self.screen.blit(text, text_rect)
             
-                self.screen.blit(game_map, (0, 0))
-                
-                text = obstacles_font.render(f"Using obstacles for the next training session: {self.use_obstacles}", True, (0,0,0))
-                text_rect = text.get_rect()
-                text_pos_y = TEXT_POS_Y
-                text_rect.topleft = (TEXT_POS_X, TEXT_POS_Y)
-                self.screen.blit(text, text_rect)
+            text = obstacles_font.render(f"Current obstacle X position: {obstacle.position[0]}", True, (0,0,0))
+            text_rect = text.get_rect()
+            text_pos_y += 20
+            text_rect.topleft = (TEXT_POS_X, text_pos_y)
+            self.screen.blit(text, text_rect)
 
-                pygame.display.flip()
-                self.clock.tick(60) # 60 FPS
+            text = obstacles_font.render(f"Current obstacle Y position: {obstacle.position[1]}", True, (0,0,0))
+            text_rect = text.get_rect()
+            text_pos_y += 20
+            text_rect.topleft = (TEXT_POS_X, text_pos_y)
+            self.screen.blit(text, text_rect)
+
+            text = obstacles_font.render(f"Current obstacle enabled: {obstacle.enabled}", True, (0,0,0))
+            text_rect = text.get_rect()
+            text_pos_y += 20
+            text_rect.topleft = (TEXT_POS_X, text_pos_y)
+            self.screen.blit(text, text_rect)
+
+            # --- Updating the display ---
+            pygame.display.flip()
+            self.clock.tick(60) # 60 FPS
 
 
-    def set_track_obstacles(self, map):
+    def set_track_obstacles(self, track_map):
         if self.pygame_is_initialized:
-            self.__set_track_obstacles__(self.args.track_map)
+            self.__set_track_obstacles__(track_map)
+        else:
+            raise Exception("PyGame is NOT initialized!")
+
+
+    def __clear_track_obstacles__(self, track_map):
+        self.game_map = pygame.image.load(f"images/tracks/{track_map}").convert()
+        
+        if track_map in self.obstacles:
+            if len(self.obstacles):
+                del self.obstacles[track_map]
+                del self.bz_backgrounds[:]
+
+
+    def clear_track_obstacles(self, track_map):
+        if self.pygame_is_initialized:
+            self.__clear_track_obstacles__(track_map)
         else:
             raise Exception("PyGame is NOT initialized!")
 

@@ -1,7 +1,8 @@
 # Files
-CONFIG_FILE    = "./config.ini"
-DEFAULT_SPRITE = "car01.png"
-DEFAULT_MAP    = "map01.png"
+CONFIG_FILE      = "./config.ini"
+DEFAULT_SPRITE   = "car01.png"
+DEFAULT_MAP      = "map01.png"
+DEFAULT_OBSTACLE = "obstacle01.png"
 
 # Exit codes
 EXIT_SUCCESS      = 0
@@ -20,9 +21,13 @@ FOREGROUND  = BLACK_COLOR
 CAR_SIZES                = (10, 20, 30, 40, 50, 60, 70, 80, 90)
 CAR_SIZE_X               = 60
 CAR_SIZE_Y               = 60
+OBSTACLE_SIZES           = (10, 20, 30, 40, 50, 60, 70, 80, 90)
+OBSTACLE_SIZE_X          = 60
+OBSTACLE_SIZE_Y          = 60
 
 # Simultation
-BORDER_COLOR                 = (255, 255, 255, 255)
+TRACK_BORDER_COLOR           = (255, 255, 255, 255)
+OBSTACLE_BORDER_COLOR        = (221, 221, 221, 255)
 MAX_RADAR_SENSING_LENGTH     = 500
 DEFAULT_RADAR_SENSING_LENGTH = 300
 MAX_GENERATIONS              = 1000

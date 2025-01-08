@@ -56,8 +56,10 @@ class Car:
         for point in self.corners:
             # If Any Corner Touches Border Color -> Crash
             # Assumes Rectangle
-            if game_map.get_at((int(point[0]), int(point[1]))) == BORDER_COLOR:
+            pixel_color = game_map.get_at((int(point[0]), int(point[1])))
+            if pixel_color == TRACK_BORDER_COLOR or pixel_color == OBSTACLE_BORDER_COLOR:
                 self.alive = False
+
                 break
 
 
@@ -66,8 +68,10 @@ class Car:
         x = int(self.center[0] + math.cos(math.radians(360 - (self.angle + degree))) * length)
         y = int(self.center[1] + math.sin(math.radians(360 - (self.angle + degree))) * length)
 
-        # While We Don't Hit BORDER_COLOR AND length < self.args.sensing_length (just a max) -> go further and further
-        while not game_map.get_at((x, y)) == BORDER_COLOR and length < self.args.sensing_length:
+        # While We Don't Hit TRACK_BORDER_COLOR AND length < self.args.sensing_length (just a max) -> go further and further
+        pixel_color = game_map.get_at((x, y))
+        while not (pixel_color == TRACK_BORDER_COLOR or pixel_color == OBSTACLE_BORDER_COLOR) and length < self.args.sensing_length:
+            pixel_color = game_map.get_at((x, y)) # Update the pixel_color for the next iteration of the loop
             length = length + 1
             x = int(self.center[0] + math.cos(math.radians(360 - (self.angle + degree))) * length)
             y = int(self.center[1] + math.sin(math.radians(360 - (self.angle + degree))) * length)

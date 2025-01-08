@@ -20,11 +20,13 @@ class Args:
         self.parser.add_argument("-i", "--inputs", type=int, help="Number of inputs", default=0)
         self.parser.add_argument("-r", "--display_radars", help="Display radars", action='store_true')
         self.parser.add_argument("-l", "--sensing_length", type=int, help="Radar sensing length", default=DEFAULT_RADAR_SENSING_LENGTH)
-        self.parser.add_argument("-S", "--car_size", type=int, help="Car size", default=5)
-        self.parser.add_argument("-s", "--car_sprite", type=str, help="Car sprite to load", default=DEFAULT_SPRITE)
+        self.parser.add_argument("-s", "--car_size", type=int, help="Car size", default=5)
+        self.parser.add_argument("-C", "--car_sprite", type=str, help="Car sprite to load", default=DEFAULT_SPRITE)
         self.parser.add_argument("-m", "--track_map", type=str, help="Track map to load", default=DEFAULT_MAP)
         self.parser.add_argument("-G", "--generation_interval", type=int, help="Elapsed generations when creaking a training checkpoint", default=10)
         self.parser.add_argument("-T", "--time_interval_seconds", type=int, help="Elapsed seconds when creaking a training checkpoint", default=300)
+        self.parser.add_argument("-o", "--obstacle_sprite", type=str, help="Obstacle sprite to load", default=DEFAULT_OBSTACLE)
+        self.parser.add_argument("-O", "--enable_obstacles", help="Enable track obstacles", action='store_true')
 
         self.args = self.parser.parse_args()
 
@@ -38,6 +40,8 @@ class Args:
         self.track_map = self.args.track_map
         self.generation_interval = self.args.generation_interval
         self.time_interval_seconds = self.args.time_interval_seconds
+        self.obstacle_sprite = self.args.obstacle_sprite
+        self.enable_obstacles = self.args.enable_obstacles
     
         self.__check_arguments__()
 
@@ -49,6 +53,7 @@ class Args:
         self.__check_car_size__()
         self.__check_car_sprite__()
         self.__check_image_map__()
+        self.__check_obstacle_sprite__()
 
 
     def __check_generations__(self):
@@ -119,3 +124,9 @@ class Args:
         if not os.path.exists(f"images/tracks/{self.track_map}"):
             print(f"=> Error! Can't load track map file: images/tracks/{self.track_map}")
             sys.exit(ERROR_TRACK_LOAD)
+
+
+    def __check_obstacle_sprite__(self):
+            if not os.path.exists(f"images/obstacles/{self.obstacle_sprite}"):
+                print(f"=> Error! Can't load obstacle sprite file: images/obstacles/{self.obstacle_sprite}")
+                sys.exit(ERROR_SPRITE_LOAD)

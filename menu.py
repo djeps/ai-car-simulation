@@ -26,11 +26,13 @@ class Menu():
         self.theme = self.__create_main_theme__()
         self.__create_select_track_menu__(self.theme)
         self.__create_arguments_menu__(self.theme)
+        self.__create_set_obstacles_menu__(self.theme)
         self.__create_main_menu__(caption, self.theme)
 
         self.current_menu = self.menu_main
         self.return_from_select_track_menu = False
         self.return_from_arguments_menu = False
+        self.return_from_set_obstacles_menu = False
         self.winner = None
     
 
@@ -42,6 +44,16 @@ class Menu():
         return theme
 
 
+    def __create_set_obstacles_menu__(self, theme):
+        self.set_obstacles_menu = pygame_menu.Menu("Set obstacles", 400, 230, theme=self.theme)
+
+        self.set_obstacles_menu.add.selector("Enable obstacles: ", [("False", False), ("True", True)], default=1 if self.args.enable_obstacles else 0, selector_id="enable_obstacles")
+        self.set_obstacles_menu.add.button("Set track obstacles", self.__menu_item_set_track_obstacles__)
+        self.set_obstacles_menu.add.button("Clear track obstacles", self.__menu_item_clear_track_obstacles__)
+
+        self.set_obstacles_menu.add.button("Done", self.__return_to_menu_main_from_set_obstacles_menu__)
+
+
     def __create_select_track_menu__(self, theme):
         self.select_track_menu = pygame_menu.Menu("Select track", 400, 150, theme=self.theme)
 
@@ -50,16 +62,17 @@ class Menu():
 
 
     def __create_arguments_menu__(self, theme):
-        self.arguments_menu = pygame_menu.Menu("Arguments", 400, 455, theme=self.theme)
+        self.arguments_menu = pygame_menu.Menu("Arguments", 400, 490, theme=self.theme)
 
-        self.arguments_menu.add.selector("Verbose mode: ", [("True", True), ("False", False)], default=0 if self.args.verbose else 1, selector_id="verbose")
+        self.arguments_menu.add.selector("Verbose mode: ", [("False", False), ("True", True)], default=1 if self.args.verbose else 0, selector_id="verbose")
         self.arguments_menu.add.text_input("No. of Generations: ", default=self.args.generations, maxchar=4, maxwidth=5, textinput_id="generations",input_type=pygame_menu.locals.INPUT_INT, cursor_selection_enable=False)
         self.arguments_menu.add.text_input("No. of sensor inputs: ", default=self.args.inputs, maxchar=2, maxwidth=3, textinput_id="inputs",input_type=pygame_menu.locals.INPUT_INT, cursor_selection_enable=False)
-        self.arguments_menu.add.selector("Display radars: ", [("True", True), ("False", False)], default=0 if self.args.display_radars else 1, selector_id="display_radars")
+        self.arguments_menu.add.selector("Display radars: ", [("False", False), ("True", True)], default=1 if self.args.display_radars else 0, selector_id="display_radars")
         self.arguments_menu.add.text_input("Sensing length: ", default=self.args.sensing_length, maxchar=3, maxwidth=4, textinput_id="sensing_length",input_type=pygame_menu.locals.INPUT_INT, cursor_selection_enable=False)
         self.arguments_menu.add.selector("Car size: ", [("Tiniest", 0), ("Tiny", 1), ("Smallest", 2), ("Smaller", 3), ("Small", 4), ("Normal", 5), ("Bigger", 6), ("Larger", 7), ("Largest", 8)], default=self.args.car_size, selector_id="car_size")
         self.arguments_menu.add.text_input("Car sprite: ", default=self.args.car_sprite, textinput_id="car_sprite", cursor_selection_enable=False)
         self.arguments_menu.add.text_input("Track map: ", default=self.args.track_map, textinput_id="track_map", cursor_selection_enable=False)
+        self.arguments_menu.add.selector("Enable obstacles: ", [("False", False), ("True", True)], default=1 if self.args.enable_obstacles else 0, selector_id="enable_obstacles")
         self.arguments_menu.add.text_input("Checkpoint on generations: ", default=self.args.generation_interval, maxchar=3, maxwidth=4, textinput_id="generation_interval",input_type=pygame_menu.locals.INPUT_INT, cursor_selection_enable=False)
         self.arguments_menu.add.text_input("Checkpooint on seconds: ", default=self.args.time_interval_seconds, maxchar=4, maxwidth=5, textinput_id="time_interval_seconds",input_type=pygame_menu.locals.INPUT_INT, cursor_selection_enable=False)
         self.arguments_menu.add.button("Done", self.__return_to_menu_main_from_arguments_menu__)
@@ -67,7 +80,7 @@ class Menu():
 
     def __create_main_menu__(self, caption, theme):
         self.caption = caption
-        self.menu_main = pygame_menu.Menu(self.caption, 400, 355, theme=self.theme)
+        self.menu_main = pygame_menu.Menu(self.caption, 400, 360, theme=self.theme)
 
         self.menu_main.add.button("New training", self.__menu_item_start_new_training__)
         self.menu_main.add.button("Continue training", self.__menu_item_continue_from_training__)
@@ -95,6 +108,9 @@ class Menu():
                 
                 if self.return_from_select_track_menu:
                     self.__on_select_track_menu_close__()
+                
+                if self.return_from_set_obstacles_menu:
+                    self.__on_set_obstacles_menu_close__()
 
             pygame.display.flip()
             self.game_env.get_clock().tick(60)
@@ -109,11 +125,15 @@ class Menu():
         self.args.car_size = self.arguments_menu.get_widget("car_size").get_value()[0][1]
         self.args.car_sprite = self.arguments_menu.get_widget("car_sprite").get_value()
         self.args.track_map = self.arguments_menu.get_widget("track_map").get_value()
+        self.args.enable_obstacles = self.arguments_menu.get_widget("enable_obstacles").get_value()[0][1]
         self.args.generation_interval = self.arguments_menu.get_widget("generation_interval").get_value()
         self.args.time_interval_seconds = self.arguments_menu.get_widget("time_interval_seconds").get_value()
 
         # Update the 'track_map' value when the 'select_track_menu' is displayed
         self.select_track_menu.get_widget("track_map").set_value(self.args.track_map)
+
+        # Update the 'enable_obstacles' value when the 'set_obstacles_menu' is displayed
+        self.set_obstacles_menu.get_widget("enable_obstacles").set_value(self.args.enable_obstacles)
 
 
     def __update_config__(self):
@@ -254,11 +274,35 @@ class Menu():
         self.winner_nn.display_nn()
 
 
+    def __menu_item_set_track_obstacles__(self):
+        self.neat_algo.set_track_obstacles(self.args.track_map)
+
+
+    def __menu_item_clear_track_obstacles__(self):
+        if self.args.verbose:
+            print("=> Clearing track obstacles")
+        
+        self.neat_algo.clear_track_obstacles(self.args.track_map)
+
+    
+    def __on_set_obstacles_menu_close__(self):
+        self.return_from_set_obstacles_menu = False
+        self.args.enable_obstacles = self.set_obstacles_menu.get_widget("enable_obstacles").get_value()[0][1]
+
+        # Update the 'enable_obstacles' value when the 'arguments_menu' is displayed
+        self.arguments_menu.get_widget("enable_obstacles").set_value(self.args.enable_obstacles)
+
+
+    def __return_to_menu_main_from_set_obstacles_menu__(self):
+        self.return_from_set_obstacles_menu = True
+        self.current_menu = self.menu_main
+
+
     def __menu_item_set_obstacles__(self):
         if self.args.verbose:
             print("=> Setting track obstacles")
-
-        self.neat_algo.set_track_obstacles(self.args.track_map)
+        
+        self.current_menu = self.set_obstacles_menu
 
 
     def __menu_item_quit__(self):
