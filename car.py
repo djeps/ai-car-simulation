@@ -17,7 +17,7 @@ class Car:
         self.sprite = pygame.transform.scale(self.sprite, (CAR_SIZES[self.args.car_size], CAR_SIZES[self.args.car_size]))
         self.rotated_sprite = self.sprite 
 
-        self.position = [830, 920] # Starting Position
+        self.position = [840, 860] # Starting Position
         self.angle = 0
         self.speed = 0
 
@@ -127,7 +127,9 @@ class Car:
 
     def get_radar_sensor_angles(self, num_inputs):
         angles = []
-        angle_step = int(R_VIEW_ANGLE / int(self.args.inputs / 2))
+
+        r_view_angle = int(self.args.view_angle / 2)
+        angle_step = int(r_view_angle/ int(self.args.inputs / 2))
 
         if num_inputs % 2 == 0:
             angle = int(angle_step / 2)
@@ -139,7 +141,7 @@ class Car:
 
         for i in range(0, int(self.args.inputs / 2)):
             angle = angle + angle_step
-            if angle <= R_VIEW_ANGLE:
+            if angle <= r_view_angle:
                 angles.append(angle)
                 angles.append(-angle)
 
