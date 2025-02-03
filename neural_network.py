@@ -97,7 +97,10 @@ class NeatAlgo:
         population.add_reporter(neat.StdOutReporter(True))
         stats = neat.StatisticsReporter()
         population.add_reporter(stats)
-        population.add_reporter(Checkpointer(generation_interval=self.args.generation_interval, time_interval_seconds=self.args.time_interval_seconds, filename_prefix='neat-checkpoint-'))
+
+        population.add_reporter(Checkpointer(generation_interval=self.args.generation_interval,
+                                             time_interval_seconds=self.args.time_interval_seconds,
+                                             filename_prefix=f"neat-checkpoint-{self.args.inputs}-"))
         
         return population
 
