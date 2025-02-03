@@ -23,7 +23,7 @@ class Car:
         self.sprite = pygame.transform.scale(self.sprite, (CAR_SIZES[self.args.car_size], CAR_SIZES[self.args.car_size]))
         self.rotated_sprite = self.sprite 
 
-        self.position = [840, 860] # Starting Position
+        self.position = [900, 910] # Starting Position
         self.angle = 0
         self.speed = 0
 
