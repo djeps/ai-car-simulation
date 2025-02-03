@@ -62,11 +62,12 @@ class Menu():
 
 
     def __create_arguments_menu__(self, theme):
-        self.arguments_menu = pygame_menu.Menu("Arguments", 400, 490, theme=self.theme)
+        self.arguments_menu = pygame_menu.Menu("Arguments", 400, 520, theme=self.theme)
 
         self.arguments_menu.add.selector("Verbose mode: ", [("False", False), ("True", True)], default=1 if self.args.verbose else 0, selector_id="verbose")
         self.arguments_menu.add.text_input("No. of Generations: ", default=self.args.generations, maxchar=4, maxwidth=5, textinput_id="generations",input_type=pygame_menu.locals.INPUT_INT, cursor_selection_enable=False)
         self.arguments_menu.add.text_input("No. of sensor inputs: ", default=self.args.inputs, maxchar=2, maxwidth=3, textinput_id="inputs",input_type=pygame_menu.locals.INPUT_INT, cursor_selection_enable=False)
+        self.arguments_menu.add.text_input("View angle: ", default=self.args.view_angle, maxchar=3, maxwidth=4, textinput_id="view_angle",input_type=pygame_menu.locals.INPUT_INT, cursor_selection_enable=False)
         self.arguments_menu.add.selector("Display radars: ", [("False", False), ("True", True)], default=1 if self.args.display_radars else 0, selector_id="display_radars")
         self.arguments_menu.add.text_input("Sensing length: ", default=self.args.sensing_length, maxchar=3, maxwidth=4, textinput_id="sensing_length",input_type=pygame_menu.locals.INPUT_INT, cursor_selection_enable=False)
         self.arguments_menu.add.selector("Car size: ", [("Tiniest", 0), ("Tiny", 1), ("Smallest", 2), ("Smaller", 3), ("Small", 4), ("Normal", 5), ("Bigger", 6), ("Larger", 7), ("Largest", 8)], default=self.args.car_size, selector_id="car_size")
@@ -120,6 +121,7 @@ class Menu():
         self.args.verbose = self.arguments_menu.get_widget("verbose").get_value()[0][1]
         self.args.generations = self.arguments_menu.get_widget("generations").get_value()
         self.args.inputs = self.arguments_menu.get_widget("inputs").get_value()
+        self.args.view_angle = self.arguments_menu.get_widget("view_angle").get_value()
         self.args.display_radars = self.arguments_menu.get_widget("display_radars").get_value()[0][1]
         self.args.sensing_length = self.arguments_menu.get_widget("sensing_length").get_value()
         self.args.car_size = self.arguments_menu.get_widget("car_size").get_value()[0][1]
