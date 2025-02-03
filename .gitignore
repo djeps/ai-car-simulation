@@ -27,3 +27,10 @@ newcar.bak.py
 # Checkpoint files
 neat-checkpoint-*
 neat-generations
+
+# Python virtual environment
+venv/
+
+# Simulation output redirects
+simulation*.txt
+
