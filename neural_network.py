@@ -458,11 +458,12 @@ class NeatAlgo:
         if not self.pygame_is_initialized:
             raise Exception("PyGame is NOT initialized!")
         
-        if winner is None:
-            raise Exception("No previous training has been found! Aborting.")
-        
-        self.__test_run__(self.args.car_sprite, self.args.track_map, winner)
-    
+        if winner:
+            self.__test_run__(self.args.car_sprite, self.args.track_map, winner)
+        else:
+            if self.args.verbose:
+                print("=> Aborting... No previous training has been found!")
+
 
     def __update_obstacles__(self, obstacle):
         obstacle_count = 0
@@ -678,20 +679,26 @@ class NeuralNetwork:
     
     
     def display_nn(self):
-        self.keep_running = True
+        self.keep_running = False
 
         screen_width, screen_height = self.screen.get_size()
         
-        nn_winner_img = pygame.image.load("nn_winner.png").convert_alpha()
+        if os.path.exists("nn_winner.png"):
+            self.keep_running = True
 
-        nn_winner_font = pygame.font.SysFont("Open Sans", 24)
-        nn_winner_text = nn_winner_font.render("Winner Neural Network Topology", True, FOREGROUND)
-        
-        nn_winner_rect = nn_winner_img.get_rect()
-        nn_winner_rect.center = (screen_width // 2, screen_height // 2)
+            nn_winner_img = pygame.image.load("nn_winner.png").convert_alpha()
 
-        nn_winner_text_rect = nn_winner_text.get_rect()
-        nn_winner_text_rect.center = (screen_width // 2, nn_winner_rect.top - TEXT_POS_Y * 8)
+            nn_winner_font = pygame.font.SysFont("Open Sans", 24)
+            nn_winner_text = nn_winner_font.render("Winner Neural Network Topology", True, FOREGROUND)
+            
+            nn_winner_rect = nn_winner_img.get_rect()
+            nn_winner_rect.center = (screen_width // 2, screen_height // 2)
+
+            nn_winner_text_rect = nn_winner_text.get_rect()
+            nn_winner_text_rect.center = (screen_width // 2, nn_winner_rect.top - TEXT_POS_Y * 8)
+        else:
+            if self.args.verbose:
+                print("=> Aborting... Cannot display the NN. Have you ever run a training session?")
         
         while self.keep_running:
             for event in pygame.event.get():
