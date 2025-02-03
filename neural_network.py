@@ -1,4 +1,9 @@
 import os
+
+# We need to set this environment variable before importing pygame
+# in order to completely disable the access/initializtion of the sound engine
+os.environ['SDL_AUDIODRIVER'] = 'dummy'
+
 import random
 import glob
 import neat

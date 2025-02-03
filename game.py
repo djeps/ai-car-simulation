@@ -1,4 +1,9 @@
 import os
+
+# We need to set this environment variable before importing pygame
+# in order to completely disable the access/initializtion of the sound engine
+os.environ['SDL_AUDIODRIVER'] = 'dummy'
+
 import pygame
 
 from constants import *
@@ -11,6 +16,7 @@ class GameEnvironment():
         os.environ['SDL_VIDEO_CENTERED'] = '1' # Center the PyGame window
         pygame.display.set_caption("NEAT Car Simulator")
         pygame.init()
+
         self.screen = pygame.display.set_mode((width, height))
         self.clock = pygame.time.Clock()
 

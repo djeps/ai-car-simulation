@@ -1,4 +1,9 @@
 import os
+
+# We need to set this environment variable before importing pygame
+# in order to completely disable the access/initializtion of the sound engine
+os.environ['SDL_AUDIODRIVER'] = 'dummy'
+
 import sys
 import glob
 import pygame
@@ -9,6 +14,8 @@ from constants import *
 from args import *
 from game import *
 from neural_network import *
+from pygame_menu import sound
+
 
 class Menu():
 
@@ -47,6 +54,9 @@ class Menu():
     def __create_set_obstacles_menu__(self, theme):
         self.set_obstacles_menu = pygame_menu.Menu("Set obstacles", 400, 230, theme=self.theme)
 
+        # It might also be a good idea to mute all sound effects for the menu 
+        self.set_obstacles_menu.set_sound(None, recursive=True)
+
         self.set_obstacles_menu.add.selector("Enable obstacles: ", [("False", False), ("True", True)], default=1 if self.args.enable_obstacles else 0, selector_id="enable_obstacles")
         self.set_obstacles_menu.add.button("Set track obstacles", self.__menu_item_set_track_obstacles__)
         self.set_obstacles_menu.add.button("Clear track obstacles", self.__menu_item_clear_track_obstacles__)
@@ -57,12 +67,18 @@ class Menu():
     def __create_select_track_menu__(self, theme):
         self.select_track_menu = pygame_menu.Menu("Select track", 400, 150, theme=self.theme)
 
+        # It might also be a good idea to mute all sound effects for the menu
+        self.select_track_menu.set_sound(None, recursive=True)
+
         self.select_track_menu.add.text_input("Track map: ", default=self.args.track_map, textinput_id="track_map", cursor_selection_enable=False)
         self.select_track_menu.add.button("Done", self.__return_to_menu_main_from_select_track_menu__)
 
 
     def __create_arguments_menu__(self, theme):
         self.arguments_menu = pygame_menu.Menu("Arguments", 400, 520, theme=self.theme)
+
+        # It might also be a good idea to mute all sound effects for the menu
+        self.arguments_menu.set_sound(None, recursive=True)
 
         self.arguments_menu.add.selector("Verbose mode: ", [("False", False), ("True", True)], default=1 if self.args.verbose else 0, selector_id="verbose")
         self.arguments_menu.add.text_input("No. of Generations: ", default=self.args.generations, maxchar=4, maxwidth=5, textinput_id="generations",input_type=pygame_menu.locals.INPUT_INT, cursor_selection_enable=False)
@@ -82,6 +98,9 @@ class Menu():
     def __create_main_menu__(self, caption, theme):
         self.caption = caption
         self.menu_main = pygame_menu.Menu(self.caption, 400, 360, theme=self.theme)
+
+        # It might also be a good idea to mute all sound effects for the menu
+        self.menu_main.set_sound(None, recursive=True)
 
         self.menu_main.add.button("New training", self.__menu_item_start_new_training__)
         self.menu_main.add.button("Continue training", self.__menu_item_continue_from_training__)
