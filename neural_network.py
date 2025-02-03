@@ -222,6 +222,27 @@ class NeatAlgo:
             self.clock.tick(60) # 60 FPS
 
 
+    def __get_inputs_from_prev_training__(self):
+        file_name_pattern = "neat-checkpoint-"
+        all_files = glob.glob(os.path.join("", "*"))
+        checkpoint_file = None
+
+        for file in all_files:
+            if file_name_pattern in os.path.basename(file):
+                checkpoint_file = file
+                break
+        
+        inputs_num = 0
+
+        if checkpoint_file:
+            try:
+                inputs_num = int(checkpoint_file.split('-')[2])
+            except:
+                inputs_num = -1
+
+        return inputs_num
+
+
     def train_nn(self, sprite, map, new_training=True, neat_generations=0):
         # When new training is started
         self.neat_generations = self.args.generations
@@ -232,11 +253,26 @@ class NeatAlgo:
         # through the 'next_generations' argument and from there,
         # we subtract the number of the last checkpoint generation
         if not new_training:
+            last_inputs = self.__get_inputs_from_prev_training__()
+            if last_inputs != 0:
+                if self.args.inputs != last_inputs:
+                    if self.args.verbose:
+                        print(f"=> It seems as if in the meantime you have changed the inputs number?")
+                        print(f"=> Previously started training input number: {last_inputs}")
+                        print(f"=> New number of inputs: {self.args.inputs}")
+                        print(f"=> Please restore the number of inputs to: {last_inputs} before continuing")
+                        print("=> ... or start a new training session. Aborting...")
+
+                    # Immediately return from the function!
+                    # It's not allowed to change the number of inputs in an unfinished training
+                    return
+
             self.neat_generations = neat_generations - self.__get_checkpoint__()[0]
             self.generations_remaining = self.neat_generations
 
         self.generations_remaining += 1
-        self.neat_population = self.__create_population__(self.neat_config, new_training)
+        neat_config = self.__load_config__(CONFIG_FILE)
+        self.neat_population = self.__create_population__(neat_config, new_training)
 
         # Start/continue a model training
         if self.args.verbose:
@@ -246,6 +282,7 @@ class NeatAlgo:
         if self.pygame_is_initialized:
             try:
                 # The winner neural network after the training has completed 
+                
                 winner = self.neat_population.run(self.__training_run__, self.neat_generations)
                 
                 # Save the winner genome
