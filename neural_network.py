@@ -51,7 +51,6 @@ class NeatAlgo:
             self.keep_running = True
             self.use_obstacles = False
         
-            self.neat_config = self.__load_config__(CONFIG_FILE)
             self.trained_nn = None
             self.obstacles = dict()
             self.bz_backgrounds = list()
@@ -379,7 +378,8 @@ class NeatAlgo:
     def __test_run__(self, sprite, map, winner):
         keep_running = True
         
-        self.trained_nn = neat.nn.FeedForwardNetwork.create(winner, self.neat_config)
+        neat_config = self.__load_config__(CONFIG_FILE)
+        self.trained_nn = neat.nn.FeedForwardNetwork.create(winner, neat_config)
 
         # Get the number of inputs directly from the winning genome (trained neural network)
         num_inputs = self.get_num_inputs(winner)
@@ -643,12 +643,14 @@ class NeatAlgo:
             if self.args.verbose:
                 print("=> Successfully generated an image of the neural network topology")
             
-            visualize.draw_net(self.neat_config, winner, view=False, node_names=node_names, filename="nn_winner", fmt="png")
+            neat_config = self.__load_config__(CONFIG_FILE)
+            visualize.draw_net(neat_config, winner, view=False, node_names=node_names, filename="nn_winner", fmt="png")
         else:
             if self.args.verbose:
                 print("=> Caution! The generated image of the neural network topology is NOT from a recent training run")
 
-            visualize.draw_net(self.neat_config, winner, view=False, filename="nn_winner", fmt="png")
+            neat_config = self.__load_config__(CONFIG_FILE)
+            visualize.draw_net(neat_config, winner, view=False, filename="nn_winner", fmt="png")
 
 
 class NeuralNetwork:
