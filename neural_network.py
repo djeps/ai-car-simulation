@@ -367,7 +367,7 @@ class NeatAlgo:
                 bz_copy = self.bz_backgrounds[i][2]
                 x = self.bz_backgrounds[i][0]
                 y = self.bz_backgrounds[i][1]
-                self.game_map.blit(bz_copy, (x, y))
+                game_map.blit(bz_copy, (x, y))
 
                 o = self.obstacles[self.args.track_map][i]
                 
@@ -388,11 +388,12 @@ class NeatAlgo:
 
         car = Car(self.args)
 
+        game_map = self.game_map
+        
         while keep_running:
             # --- Re-drawing the game map/surface ---
-            game_map = self.game_map
             self.screen.fill(BACKGROUND)
-            self.screen.blit(self.game_map, (0, 0))
+            self.screen.blit(game_map, (0, 0))
 
             # --- Event processing ---
             for event in pygame.event.get():
@@ -489,10 +490,10 @@ class NeatAlgo:
         obstacle = Obstacle(4, 10, True, (0, 0))
         obstacles_font = pygame.font.SysFont("Open Sans", 14)
 
+        game_map = self.game_map
 
         while keep_running:
             # --- Re-drawing the game map/surface ---
-            game_map = self.game_map
             self.screen.fill(BACKGROUND)
             self.screen.blit(game_map, (0, 0))
 
@@ -547,7 +548,7 @@ class NeatAlgo:
                         bz_y = obstacle.get_y()
                         bz_w = obstacle.get_width()
                         bz_h = obstacle.get_height()
-                        self.__copy_bz_background__(self.game_map, bz_x, bz_y, bz_w, bz_h)
+                        self.__copy_bz_background__(game_map, bz_x, bz_y, bz_w, bz_h)
                         obstacles_count = self.__update_obstacles__(obstacle)
                         
                         obstacle = Obstacle(4, 10, True, (0, 0))
@@ -619,8 +620,6 @@ class NeatAlgo:
 
 
     def __clear_track_obstacles__(self, track_map):
-        self.game_map = pygame.image.load(f"images/tracks/{track_map}").convert()
-        
         if track_map in self.obstacles:
             if len(self.obstacles):
                 del self.obstacles[track_map]
