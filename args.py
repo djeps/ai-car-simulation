@@ -15,16 +15,17 @@ class Args:
         self.config = configparser.ConfigParser()
         self.config.read(CONFIG_FILE)
 
-        self.parser.add_argument("-V", "--verbose", help="Verbose mode", action='store_true')
+        self.parser.add_argument("-v", "--verbose", help="Verbose mode", action='store_true')
         self.parser.add_argument("-g", "--generations", type=int, help="Number of generations", default=MAX_GENERATIONS)
-        self.parser.add_argument("-i", "--inputs", type=int, help="Number of inputs", default=0)
+        self.parser.add_argument("-i", "--inputs", type=int, help="Number of inputs", default=DEFAULT_INPUTS)
+        self.parser.add_argument("-a", "--view_angle", type=int, help="Field of view of the radar", default=DEFAULT_VIEW_ANGLE)
         self.parser.add_argument("-r", "--display_radars", help="Display radars", action='store_true')
         self.parser.add_argument("-l", "--sensing_length", type=int, help="Radar sensing length", default=DEFAULT_RADAR_SENSING_LENGTH)
         self.parser.add_argument("-s", "--car_size", type=int, help="Car size", default=5)
         self.parser.add_argument("-C", "--car_sprite", type=str, help="Car sprite to load", default=DEFAULT_SPRITE)
         self.parser.add_argument("-m", "--track_map", type=str, help="Track map to load", default=DEFAULT_MAP)
-        self.parser.add_argument("-G", "--generation_interval", type=int, help="Elapsed generations when creaking a training checkpoint", default=10)
-        self.parser.add_argument("-T", "--time_interval_seconds", type=int, help="Elapsed seconds when creaking a training checkpoint", default=300)
+        self.parser.add_argument("-G", "--generation_interval", type=int, help="Elapsed generations when creating a training checkpoint", default=10)
+        self.parser.add_argument("-T", "--time_interval_seconds", type=int, help="Elapsed seconds when creating a training checkpoint", default=300)
         self.parser.add_argument("-o", "--obstacle_sprite", type=str, help="Obstacle sprite to load", default=DEFAULT_OBSTACLE)
         self.parser.add_argument("-O", "--enable_obstacles", help="Enable track obstacles", action='store_true')
 
@@ -32,6 +33,7 @@ class Args:
 
         self.generations = self.args.generations
         self.inputs = self.args.inputs
+        self.view_angle = self.args.view_angle
         self.display_radars = self.args.display_radars
         self.verbose = self.args.verbose
         self.sensing_length = self.args.sensing_length
@@ -49,6 +51,7 @@ class Args:
     def __check_arguments__(self):
         self.__check_generations__()
         self.__check_inputs__()
+        self.__check_view_angle__
         self.__check_sensing_length__()
         self.__check_car_size__()
         self.__check_car_sprite__()
@@ -97,6 +100,18 @@ class Args:
             if self.verbose:
                 print(f"=> Overriding radar sensing length: {self.sensing_length} (given) to {DEFAULT_RADAR_SENSING_LENGTH} (default)")
             self.sensing_length = DEFAULT_RADAR_SENSING_LENGTH
+
+
+    def __check_view_angle__(self):
+        if self.view_angle > MAX_VIEW_ANGLE:
+            if self.verbose:
+                print(f"=> Overriding radar field of view angle: {self.view_angle} (given) to {MAX_VIEW_ANGLE} (max)")
+            self.view_angle = MAX_VIEW_ANGLE
+
+        if self.view_angle < MIN_VIEW_ANGLE:
+            if self.verbose:
+                print(f"=> Overriding radar field of view angle: {self.view_angle} (given) to {MIN_VIEW_ANGLE} (min)")
+            self.view_angle = MIN_VIEW_ANGLE
 
 
     def __check_car_size__(self):
