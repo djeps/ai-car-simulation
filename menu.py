@@ -249,7 +249,11 @@ class Menu():
                     if test_run:
                         recent = True
 
-                    self.neat_algo.generate_nn_image(winner, recent)
+                    if winner:
+                        self.neat_algo.generate_nn_image(winner, recent)
+                    else:
+                        if self.args.verbose:
+                            print("=> Aborting... No previous training has been found!")
             else:
                 if self.args.verbose:
                     print("=> Nothing to load (nn_winner.pkl)!")
