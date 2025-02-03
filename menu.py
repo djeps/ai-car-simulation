@@ -152,8 +152,9 @@ class Menu():
             self.neat_algo.clear_track_obstacles(self.args.track_map)
 
             if self.args.verbose:
-                print(f"=> Changing track from: {self.args.track_map} to: {self.arguments_menu.get_widget("track_map").get_value()}")
+                print(f'=> Changing track from: {self.args.track_map} to: {self.arguments_menu.get_widget("track_map").get_value()}')
             self.args.track_map = self.arguments_menu.get_widget("track_map").get_value()
+            self.neat_algo.game_map = pygame.image.load(f"images/tracks/{self.args.track_map}").convert()
         
         self.args.enable_obstacles = self.arguments_menu.get_widget("enable_obstacles").get_value()[0][1]
         self.args.generation_interval = self.arguments_menu.get_widget("generation_interval").get_value()
@@ -179,9 +180,10 @@ class Menu():
             self.neat_algo.clear_track_obstacles(self.args.track_map)
 
             if self.args.verbose:
-                print(f"=> Changing track from: {self.args.track_map} to: {self.select_track_menu.get_widget("track_map").get_value()}")
+                print(f'=> Changing track from: {self.args.track_map} to: {self.select_track_menu.get_widget("track_map").get_value()}')
             self.args.track_map = self.select_track_menu.get_widget("track_map").get_value()
-
+            self.neat_algo.game_map = pygame.image.load(f"images/tracks/{self.args.track_map}").convert()
+    
         # Update the 'track_map' value when the 'arguments_menu' is displayed
         self.arguments_menu.get_widget("track_map").set_value(self.args.track_map)
 
