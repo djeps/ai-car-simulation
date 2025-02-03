@@ -145,7 +145,16 @@ class Menu():
         self.args.sensing_length = self.arguments_menu.get_widget("sensing_length").get_value()
         self.args.car_size = self.arguments_menu.get_widget("car_size").get_value()[0][1]
         self.args.car_sprite = self.arguments_menu.get_widget("car_sprite").get_value()
-        self.args.track_map = self.arguments_menu.get_widget("track_map").get_value()
+        
+        if self.args.track_map != self.arguments_menu.get_widget("track_map").get_value():
+            if self.args.verbose:
+                print("=> Clearing track obstacles on track change")
+            self.neat_algo.clear_track_obstacles(self.args.track_map)
+
+            if self.args.verbose:
+                print(f"=> Changing track from: {self.args.track_map} to: {self.arguments_menu.get_widget("track_map").get_value()}")
+            self.args.track_map = self.arguments_menu.get_widget("track_map").get_value()
+        
         self.args.enable_obstacles = self.arguments_menu.get_widget("enable_obstacles").get_value()[0][1]
         self.args.generation_interval = self.arguments_menu.get_widget("generation_interval").get_value()
         self.args.time_interval_seconds = self.arguments_menu.get_widget("time_interval_seconds").get_value()
@@ -163,7 +172,15 @@ class Menu():
 
     def __on_select_track_menu_close__(self):
         self.return_from_select_track_menu = False
-        self.args.track_map = self.select_track_menu.get_widget("track_map").get_value()
+
+        if self.args.track_map != self.select_track_menu.get_widget("track_map").get_value():
+            if self.args.verbose:
+                print("=> Clearing track obstacles on track change")
+            self.neat_algo.clear_track_obstacles(self.args.track_map)
+
+            if self.args.verbose:
+                print(f"=> Changing track from: {self.args.track_map} to: {self.select_track_menu.get_widget("track_map").get_value()}")
+            self.args.track_map = self.select_track_menu.get_widget("track_map").get_value()
 
         # Update the 'track_map' value when the 'arguments_menu' is displayed
         self.arguments_menu.get_widget("track_map").set_value(self.args.track_map)
