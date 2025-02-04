@@ -289,7 +289,7 @@ class Menu():
         self.__save_generations_number__()
         self.__cleanup_checkpoints__()
 
-        self.winner = self.neat_algo.train_nn(self.args.car_sprite, self.args.track_map)
+        self.winner = self.neat_algo.train_nn()
         self.__load_nn_winner__(self.winner)
 
 
@@ -299,7 +299,7 @@ class Menu():
 
         self.__cleanup_checkpoints__(all=False)
 
-        self.winner = self.neat_algo.train_nn(self.args.car_sprite, self.args.track_map, new_training=False, neat_generations=self.__read_generations_number__())
+        self.winner = self.neat_algo.train_nn(new_training=False, neat_generations=self.__read_generations_number__())
         self.__load_nn_winner__(self.winner)
 
 

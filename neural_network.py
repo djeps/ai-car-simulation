@@ -242,7 +242,7 @@ class NeatAlgo:
         return inputs_num
 
 
-    def train_nn(self, sprite, map, new_training=True, neat_generations=0):
+    def train_nn(self, new_training=True, neat_generations=0):
         # When new training is started
         self.neat_generations = self.args.generations
         self.generations_remaining = self.neat_generations
@@ -375,7 +375,7 @@ class NeatAlgo:
                     self.__draw_obstacle__(game_map, o)
 
 
-    def __test_run__(self, sprite, map, winner):
+    def __test_run__(self, winner):
         keep_running = True
         
         neat_config = self.__load_config__(CONFIG_FILE)
@@ -455,12 +455,12 @@ class NeatAlgo:
             self.clock.tick(60) # 60 FPS
 
     
-    def test_nn(self, sprite, map, winner):
+    def test_nn(self, winner):
         if not self.pygame_is_initialized:
             raise Exception("PyGame is NOT initialized!")
         
         if winner:
-            self.__test_run__(self.args.car_sprite, self.args.track_map, winner)
+            self.__test_run__(winner)
         else:
             if self.args.verbose:
                 print("=> Aborting... No previous training has been found!")
