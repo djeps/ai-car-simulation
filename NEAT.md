@@ -43,4 +43,16 @@ A selected few parameters could be changed from the GUI menu of the application 
 will be persisted in the `config.ini` file too. Feel free to 'play and experiment' with some of
 the other parameters.
 
+> Note: NEAT-Python unfortunately doesn't have support for GPU acceleration and it was natively
+designed like that so that it depends on no other external libraries other than pure Python.
+Hence, everything executes on the CPU! Just keep that in mind.
+
+## Some useful links (in the order I found them interested to read)
+
+- [The NEAT algorithm: Evolving neural networks](https://blog.lunatech.com/posts/2024-02-29-the-neat-algorithm-evolving-neural-network-topologies)
+- [Evolving AIs using NEAT algorithm](https://macwha.medium.com/evolving-ais-using-a-neat-algorithm-2d154c623828)
+- [A Systematic Literature Review of the Successors of “NeuroEvolution of Augmenting Topologies](https://direct.mit.edu/evco/article/29/1/1/97341/A-Systematic-Literature-Review-of-the-Successors)
+- [A simple AI using NEAT](https://medium.com/@nirajsawant2313/a-simple-ai-using-neat-neuroevolution-of-augmenting-topologies-ae1b7d8f4a5e)
+- [The NEAT-Python repo itself](https://github.com/CodeReclaimers/neat-python)
+
 [Home](README.md)

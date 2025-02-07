@@ -39,4 +39,17 @@ refactor/modify it yourself.
 
 I already got my benefit - the experience and pleasure of learning something new.
 
+This project was heavily inspired from (well, not just 'inspired' but built on top of):
+
+- [NeuralNine's work](https://github.com/NeuralNine/ai-car-simulation)
+
+... but also from:
+
+- [Hilicot's work](https://github.com/Hilicot/Neural_Network_NEAT)
+
+I especially liked the live rendering of the NN that Hilicot has done. I really wanted to implement
+something similar but there was not enough time. I had to close the project.
+
+Perhaps some other time.
+
 [Home](README.md)
