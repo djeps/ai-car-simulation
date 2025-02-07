@@ -200,6 +200,10 @@ is the one related to the `fitness` itself:
 This is the reason for the second experiment - run the same simulation but throw in some randomness in
 the form of obstacles around the 'sharper' corners of the track:
 
+<img src="images/screenshots/obstacles_training01.png" style="max-width:100%; height:auto;">
+
+<img src="images/screenshots/obstacles_training02.png" style="max-width:100%; height:auto;">
+
 - The agent learns and evolves quicker at the beginning
 - Definetely starts slowing down approximately after the first 1/4 of the run
 - But because of the introduced randomness, it doesn't settle down
