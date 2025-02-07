@@ -21,7 +21,7 @@ with all the features I wanted to add, this would get complicated - fast! So I s
 the logic in separate modules and throw a bit of OOP in the mix.
 
 My intention was good, but my effort not so much. As I approached my deadline more and more, I found
-myself making too many excuses and mixed program logic from one module to other. One such example is
+myself making too many excuses and mixed program logic from one module to another. One such example is
 the so called `neural_network.py` module... There's so much in it that doesn't belong there in the
 first place...
 
