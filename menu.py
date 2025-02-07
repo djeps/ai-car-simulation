@@ -308,7 +308,7 @@ class Menu():
             print("=> Starting a test run session")
         
         winner = self.__load_nn_winner__(test_run=True)
-        self.neat_algo.test_nn(self.args.car_sprite, self.args.track_map, winner)
+        self.neat_algo.test_nn(winner)
         
 
     def __menu_item_display_neural_network__(self):
