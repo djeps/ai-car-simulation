@@ -121,3 +121,5 @@ Not the most elaborate or sophisticated NN - a result from a very narrow and sim
 `S1..S12` represent the input sensor nodes, whereas `Left`, `Right`, `Brake` and `Accelerate` are
 the output nodes. Everything else represent the inner nodes and within them, the calculated weights
 according to the setup of the NEAT-Python algorithm.
+
+[Home](README.md)
