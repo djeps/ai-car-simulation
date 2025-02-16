@@ -1,3 +1,5 @@
+# A simple self-driving AI car game built with NEAT-Python
+
 Please follow each link for further context:
 
 - [Disclaimer](DISCLAIMER.md)
