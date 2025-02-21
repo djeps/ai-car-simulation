@@ -76,6 +76,12 @@ docker build \
     -t ai-car-simulator:ubuntu.22.04 .
 ```
 
+... or use the utility wrapper script:
+
+```shell
+./dbuild.sh
+```
+
 Then we need to enable X11 forwarding by:
 
 ```shell
@@ -91,6 +97,12 @@ docker run -it --rm \
     --volume /tmp/.X11-unix:/tmp/.X11-unix \
     --env XDG_RUNTIME_DIR=/tmp/runtime-root \
     ai-car-simulator:ubuntu.22.04
+```
+
+... or use the utility wrapper script:
+
+```shell
+./drun.sh
 ```
 
 The application should start automatically and the container shut down once you exit the application.
